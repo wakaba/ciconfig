@@ -1,10 +1,13 @@
-all:
+all: build
 
 WGET = wget
 CURL = curl
 GIT = git
+PERL = ./perl
 
-updatenightly: local/bin/pmbp.pl
+updatenightly: local/bin/pmbp.pl build
+	$(GIT) add ciconfig
+	REMOVE_UNUSED=1 RUN_GIT=1 perl ciconfig
 	$(CURL) -s -S -L -f https://gist.githubusercontent.com/wakaba/34a71d3137a52abb562d/raw/gistfile1.txt | sh
 	$(GIT) add modules t_deps/modules
 	perl local/bin/pmbp.pl --update
@@ -30,6 +33,15 @@ pmbp-install: pmbp-upgrade
 	perl local/bin/pmbp.pl $(PMBP_OPTIONS) --install \
             --create-perl-command-shortcut @perl \
             --create-perl-command-shortcut @prove
+
+build: build-deps build-main
+
+build-deps: deps
+build-main: ciconfig
+
+ciconfig: bin/build.pl bin/ciconfig.pl
+	$(PERL) bin/build.pl bin/ciconfig.pl > $@
+	perl -c $@
 
 ## ------ Tests ------
 
