@@ -59,7 +59,7 @@ for (
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml)) {
-    $expected->{$_} //= {remove => 1};
+    $expected->{$_} ||= {remove => 1};
   }
   test {
     my $c = shift;
