@@ -2548,6 +2548,23 @@ $Options->{'circleci', 'pmbp'} = {
   },
 };
 
+$Options->{'circleci', 'docker-build'} = {
+  set => sub {
+    return unless $_[1];
+    push @{$_[0]->{machine}->{services} ||= []}, 'docker';
+    push @{$_[0]->{dependencies}->{override} ||= []},
+        'docker info',
+        'docker build -t ' . $_[1] . ' .';
+    $_[0]->{deployment}->{master}->{branch} = 'master';
+    if ($_[1] =~ m{^([^/]+)/([^/]+)/([^/]+)$}) {
+      push @{$_[0]->{deployment}->{master}->{commands} ||= []},
+          'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS '.$1;
+    }
+    push @{$_[0]->{deployment}->{master}->{commands} ||= []},
+        'docker push ' . $_[1];
+  },
+};
+
 $Options->{'circleci', 'tests'} = {
   set => sub {
     push @{$_[0]->{test}->{override} ||= []}, @{$_[1]};
