@@ -3,5 +3,8 @@
     "pmbp": 1,
     "notifications": "suika",
     "merger": 1
+  },
+  "circleci": {
+    "pmbp": 1
   }
 }

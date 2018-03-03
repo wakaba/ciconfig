@@ -8,6 +8,7 @@ use Main;
 
 for (
   [{} => {}],
+
   [{travisci => {}} => {'.travis.yml' => {json => {}}}],
   [{travisci => {pmbp => '5.8+'}} => {'.travis.yml' => {json => {
     git => {submodules => \0},
@@ -56,9 +57,11 @@ for (
        script => 'curl -f https://gist.githubusercontent.com/wakaba/ab553f86cd017e0cb28c6dbb5364b009/raw/travis-merge-job.pl | perl'},
     ]},
   }}}],
+
+  [{circleci => {}} => {'circle.yml' => {json => {}}}],
 ) {
   my ($input, $expected) = @$_;
-  for (qw(.travis.yml)) {
+  for (qw(.travis.yml circle.yml)) {
     $expected->{$_} ||= {remove => 1};
   }
   test {

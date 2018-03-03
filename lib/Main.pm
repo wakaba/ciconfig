@@ -6,6 +6,9 @@ my $Platforms = {
   travisci => {
     file => '.travis.yml',
   },
+  circleci => {
+    file => 'circle.yml', # 1.0
+  },
 };
 
 my $Options = {};
@@ -49,6 +52,47 @@ $Options->{'travisci', 'merger'} = {
          before_install => "true",
          install => "true",
          script => 'curl -f https://gist.githubusercontent.com/wakaba/ab553f86cd017e0cb28c6dbb5364b009/raw/travis-merge-job.pl | perl'};
+  },
+};
+
+$Options->{'circleci', 'heroku'} = {
+  set => sub {
+    return unless $_[1];
+    push @{$_[0]->{dependencies}->{override} ||= []},
+        'git config --global user.email "temp@circleci.test"',
+        'git config --global user.name "CircleCI"';
+
+    $_[0]->{deployment}->{master}->{branch} = 'master';
+    push @{$_[0]->{deployment}->{master}->{commands} ||= []},
+        '[[ ! -s \"$(git rev-parse --git-dir)/shallow\" ]] || git fetch --unshallow',
+        'make create-commit-for-heroku',
+        'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master';
+  },
+};
+
+$Options->{'circleci', 'pmbp'} = {
+  set => sub {
+    return unless $_[1];
+    push @{$_[0]->{dependencies}->{override} ||= []}, 'make deps';
+    push @{$_[0]->{test}->{override} ||= []}, 'make test';
+  },
+};
+
+$Options->{'circleci', 'tests'} = {
+  set => sub {
+    push @{$_[0]->{test}->{override} ||= []}, @{$_[1]};
+  },
+};
+
+$Options->{'circleci', 'merger'} = {
+  set => sub {
+    return unless $_[1];
+    for my $branch (qw(staging nightly)) {
+      $_[0]->{deployment}->{$branch}->{branch} = $branch;
+      push @{$_[0]->{deployment}->{$branch}->{commands} ||= []},
+          'git rev-parse HEAD > head.txt',
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\"base\":\"master\",\"head\":\"`cat head.txt`\",\"commit_message\":\"auto-merge $CIRCLE_BRANCH into master\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"';
+    } # $branch
   },
 };
 
