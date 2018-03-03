@@ -84,6 +84,13 @@ $Options->{'circleci', 'tests'} = {
   },
 };
 
+$Options->{'circleci', 'deploy'} = {
+  set => sub {
+    $_[0]->{deployment}->{master}->{branch} = 'master';
+    push @{$_[0]->{deployment}->{master}->{commands} ||= []}, @{$_[1]};
+  },
+};
+
 $Options->{'circleci', 'merger'} = {
   set => sub {
     return unless $_[1];
