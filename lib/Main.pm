@@ -81,21 +81,34 @@ $Options->{'circleci', 'pmbp'} = {
 $Options->{'circleci', 'docker-build'} = {
   set => sub {
     return unless $_[1];
-    my $def = ref $_[1] ? $_[1] : {name => $_[1]};
-    die "No |name|" unless defined $def->{name};
-    $def->{path} = '.' unless defined $def->{path};
-    $def->{branch} = 'master' unless defined $def->{branch};
+    my $defs = ref $_[1] eq 'ARRAY' ? $_[1] : [$_[1]];
     push @{$_[0]->{machine}->{services} ||= []}, 'docker';
-    push @{$_[0]->{dependencies}->{override} ||= []},
-        'docker info',
-        'docker build -t ' . $def->{name} . ' ' . $def->{path};
-    $_[0]->{deployment}->{$def->{branch}}->{branch} = $def->{branch};
-    if ($def->{name} =~ m{^([^/]+)/([^/]+)/([^/]+)$}) {
+    push @{$_[0]->{dependencies}->{override} ||= []}, 'docker info';
+    my $host = '';
+    for my $def (@$defs) {
+      $def = ref $def ? $def : {name => $def};
+      die "No |name|" unless defined $def->{name};
+      $def->{path} = '.' unless defined $def->{path};
+      $def->{branch} = 'master' unless defined $def->{branch};
+      push @{$_[0]->{dependencies}->{override} ||= []},
+          'docker build -t ' . $def->{name} . ' ' . $def->{path};
+      $_[0]->{deployment}->{$def->{branch}}->{branch} = $def->{branch};
+      if ($def->{name} =~ m{^([^/]+)/([^/]+)/([^/]+)$} and
+          not $1 eq $host) {
+        push @{$_[0]->{deployment}->{$def->{branch}}->{commands} ||= []},
+            'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS '.$1;
+        $host = $1;
+      }
       push @{$_[0]->{deployment}->{$def->{branch}}->{commands} ||= []},
-          'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS '.$1;
-    }
-    push @{$_[0]->{deployment}->{$def->{branch}}->{commands} ||= []},
-        'docker push ' . $def->{name};
+          'docker push ' . $def->{name} . ' && ' .
+          'curl -sSLf $BWALL_URL'.(defined $def->{bwall_suffix} ? '.' . $def->{bwall_suffix} : $def->{branch} eq 'master' ? '' : '.' . $def->{branch}).' -X POST';
+    } # $def
+  },
+};
+
+$Options->{'circleci', 'build'} = {
+  set => sub {
+    push @{$_[0]->{dependencies}->{override} ||= []}, @{$_[1]};
   },
 };
 
