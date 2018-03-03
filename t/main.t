@@ -59,6 +59,7 @@ for (
   }}}],
 
   [{circleci => {}} => {'circle.yml' => {json => {}}}],
+  [{circleci => {gaa => 1}} => {'circle.yml' => {json => {}}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml)) {

@@ -96,6 +96,12 @@ $Options->{'circleci', 'merger'} = {
   },
 };
 
+$Options->{'circleci', 'gaa'} = {
+  set => sub {
+    # XXX
+  },
+};
+
 sub generate ($$$) {
   my ($class, $input, $root_path) = @_;
 
