@@ -74,7 +74,7 @@ sub generate ($$$) {
 
   for my $platform (sort { $a cmp $b } keys %$Platforms) {
     my $p_def = $Platforms->{$platform};
-    $data->{$p_def->{file}} //= {remove => 1};
+    $data->{$p_def->{file}} ||= {remove => 1};
   }
 
   return $data;
