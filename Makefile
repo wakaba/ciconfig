@@ -39,7 +39,7 @@ build: build-deps build-main
 build-deps: deps
 build-main: ciconfig
 
-ciconfig: bin/build.pl bin/ciconfig.pl
+ciconfig: bin/build.pl bin/ciconfig.pl lib/Main.pm
 	$(PERL) bin/build.pl bin/ciconfig.pl > $@
 	perl -c $@
 
