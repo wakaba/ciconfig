@@ -10,6 +10,14 @@ for (
   [{} => {}],
 
   [{travisci => {}} => {'.travis.yml' => {json => {}}}],
+  [{travisci => {pmbp => 'latest'}} => {'.travis.yml' => {json => {
+    git => {submodules => \0},
+    language => 'perl',
+    perl => ['5.26'],
+    before_install => 'true',
+    install => 'make test-deps',
+    script => 'make test',
+  }}}],
   [{travisci => {pmbp => '5.8+'}} => {'.travis.yml' => {json => {
     git => {submodules => \0},
     language => 'perl',
