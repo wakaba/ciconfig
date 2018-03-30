@@ -34,6 +34,14 @@ for (
     install => 'make test-deps',
     script => 'make test',
   }}}],
+  [{travisci => {pmbp => '5.12+'}} => {'.travis.yml' => {json => {
+    git => {submodules => \0},
+    language => 'perl',
+    perl => ['5.26', '5.14', '5.12'],
+    before_install => 'true',
+    install => 'make test-deps',
+    script => 'make test',
+  }}}],
   [{travisci => {pmbp => '5.14+'}} => {'.travis.yml' => {json => {
     git => {submodules => \0},
     language => 'perl',
