@@ -5,9 +5,13 @@ use warnings;
 my $Platforms = {
   travisci => {
     file => '.travis.yml',
+    set => sub {
+      push @{$_[0]->{jobs}->{include} ||= []}, {stage => 'test'};
+    },
   },
   circleci => {
     file => 'circle.yml', # 1.0
+    set => sub { },
   },
 };
 
@@ -154,6 +158,8 @@ sub generate ($$$) {
     my $p_def = $Platforms->{$platform};
     die "Unknown platform |$platform|" unless defined $p_def;
     my $json = {};
+
+    $p_def->{set}->($json);
 
     for my $opt (sort { $a cmp $b } keys %{$input->{$platform}}) {
       my $o_def = $Options->{$platform, $opt};

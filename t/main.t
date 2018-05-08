@@ -9,8 +9,11 @@ use Main;
 for (
   [{} => {}],
 
-  [{travisci => {}} => {'.travis.yml' => {json => {}}}],
+  [{travisci => {}} => {'.travis.yml' => {json => {
+    jobs => {include => [{stage => 'test'}]},
+  }}}],
   [{travisci => {pmbp => 'latest'}} => {'.travis.yml' => {json => {
+    jobs => {include => [{stage => 'test'}]},
     git => {submodules => \0},
     language => 'perl',
     perl => ['5.26'],
@@ -19,6 +22,7 @@ for (
     script => 'make test',
   }}}],
   [{travisci => {pmbp => '5.8+'}} => {'.travis.yml' => {json => {
+    jobs => {include => [{stage => 'test'}]},
     git => {submodules => \0},
     language => 'perl',
     perl => ['5.26', '5.14', '5.8'],
@@ -27,6 +31,7 @@ for (
     script => 'make test',
   }}}],
   [{travisci => {pmbp => '5.10+'}} => {'.travis.yml' => {json => {
+    jobs => {include => [{stage => 'test'}]},
     git => {submodules => \0},
     language => 'perl',
     perl => ['5.26', '5.14', '5.10'],
@@ -35,6 +40,7 @@ for (
     script => 'make test',
   }}}],
   [{travisci => {pmbp => '5.12+'}} => {'.travis.yml' => {json => {
+    jobs => {include => [{stage => 'test'}]},
     git => {submodules => \0},
     language => 'perl',
     perl => ['5.26', '5.14', '5.12'],
@@ -43,6 +49,7 @@ for (
     script => 'make test',
   }}}],
   [{travisci => {pmbp => '5.14+'}} => {'.travis.yml' => {json => {
+    jobs => {include => [{stage => 'test'}]},
     git => {submodules => \0},
     language => 'perl',
     perl => ['5.26', '5.14'],
@@ -51,6 +58,7 @@ for (
     script => 'make test',
   }}}],
   [{travisci => {pmbp => 1}} => {'.travis.yml' => {json => {
+    jobs => {include => [{stage => 'test'}]},
     git => {submodules => \0},
     language => 'perl',
     perl => ['5.26', '5.14', '5.8'],
@@ -59,6 +67,7 @@ for (
     script => 'make test',
   }}}],
   [{travisci => {notifications => 'suika'}} => {'.travis.yml' => {json => {
+    jobs => {include => [{stage => 'test'}]},
     notifications => {
       email => ['wakaba@suikawiki.org'],
       irc => {channels => ['ircs://irc.suikawiki.org:6697#mechanize'], use_notice => \1},
@@ -67,6 +76,7 @@ for (
   [{travisci => {merger => 1}} => {'.travis.yml' => {json => {
     env => {global => {secure => "ab xxx 314444\n"}},
     jobs => {include => [
+      {stage => 'test'},
       {stage => 'merge',
        before_install => "true",
        install => "true",
