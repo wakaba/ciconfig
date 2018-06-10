@@ -86,6 +86,13 @@ for (
 
   [{circleci => {}} => {'circle.yml' => {json => {}}}],
   [{circleci => {gaa => 1}} => {'circle.yml' => {json => {}}}],
+  [{circleci => {required_docker_images => ['a/b', 'a/b/c']}} => {'circle.yml' => {json => {
+    machine => {services => ['docker']},
+    dependencies => {override => [
+      'docker info',
+      {'docker pull a/b && docker pull a/b/c' => {background => 1}},
+    ]},
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml)) {
