@@ -84,6 +84,22 @@ $Options->{'circleci', 'pmbp'} = {
   },
 };
 
+$Options->{'circleci', 'required_docker_images'} = {
+  set => sub {
+    return unless ref $_[1] eq 'ARRAY' and @{$_[1] or []};
+    push @{$_[0]->{machine}->{services} ||= []}, 'docker';
+    unshift @{$_[0]->{dependencies}->{override} ||= []},
+        'docker info',
+        {
+          (join ' && ', map {
+            "docker pull $_"
+          } @{$_[1]}) => {
+            background => 1,
+          },
+        };
+  }, # set
+}; # required_docker_images
+
 $Options->{'circleci', 'docker-build'} = {
   set => sub {
     return unless $_[1];
