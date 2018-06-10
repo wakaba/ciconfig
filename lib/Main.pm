@@ -79,7 +79,7 @@ $Options->{'circleci', 'heroku'} = {
 $Options->{'circleci', 'pmbp'} = {
   set => sub {
     return unless $_[1];
-    push @{$_[0]->{dependencies}->{override} ||= []}, 'make deps';
+    push @{$_[0]->{dependencies}->{override} ||= []}, 'make test-deps';
     push @{$_[0]->{test}->{override} ||= []}, 'make test';
   },
 };
