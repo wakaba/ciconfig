@@ -93,6 +93,42 @@ for (
       {'docker pull a/b && docker pull a/b/c' => {background => 1}},
     ]},
   }}}],
+  [{circleci => {heroku => 1}} => {'circle.yml' => {json => {
+    dependencies => {override => [
+      'git config --global user.email "temp@circleci.test"',
+      'git config --global user.name "CircleCI"',
+    ]},
+    deployment => {
+      master => {
+        branch => 'master',
+        commands => [
+          'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
+          'make create-commit-for-heroku',
+          'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master',
+        ],
+      },
+    },
+  }}}],
+  [{circleci => {heroku => {prepare => [
+    'abc', './foo bar',
+  ]}}} => {'circle.yml' => {json => {
+    dependencies => {override => [
+      'git config --global user.email "temp@circleci.test"',
+      'git config --global user.name "CircleCI"',
+    ]},
+    deployment => {
+      master => {
+        branch => 'master',
+        commands => [
+          'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
+          'abc',
+          './foo bar',
+          'make create-commit-for-heroku',
+          'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master',
+        ],
+      },
+    },
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml)) {

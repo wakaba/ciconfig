@@ -71,6 +71,7 @@ $Options->{'circleci', 'heroku'} = {
     $_[0]->{deployment}->{master}->{branch} = 'master';
     push @{$_[0]->{deployment}->{master}->{commands} ||= []},
         'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
+        @{(ref $_[1] eq 'HASH' && ref $_[1]->{prepare} eq 'ARRAY') ? $_[1]->{prepare} : []},
         'make create-commit-for-heroku',
         'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master';
   },
