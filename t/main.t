@@ -129,6 +129,25 @@ for (
       },
     },
   }}}],
+  [{circleci => {deploy => ['true', 'false']}} => {'circle.yml' => {json => {
+    deployment => {
+      master => {
+        branch => 'master',
+        commands => ['true', 'false'],
+      },
+    },
+  }}}],
+  [{circleci => {deploy => {
+    branch => 'oge',
+    commands => ['true', 'false'],
+  }}} => {'circle.yml' => {json => {
+    deployment => {
+      oge => {
+        branch => 'oge',
+        commands => ['true', 'false'],
+      },
+    },
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml)) {

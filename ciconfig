@@ -2613,8 +2613,13 @@ $Options->{'circleci', 'tests'} = {
 
 $Options->{'circleci', 'deploy'} = {
   set => sub {
-    $_[0]->{deployment}->{master}->{branch} = 'master';
-    push @{$_[0]->{deployment}->{master}->{commands} ||= []}, @{$_[1]};
+    my $def = $_[1];
+    if (ref $_[1] eq 'ARRAY') {
+      $def = {branch => 'master', commands => $_[1]};
+    }
+    $_[0]->{deployment}->{$def->{branch}}->{branch} = $def->{branch};
+    push @{$_[0]->{deployment}->{$def->{branch}}->{commands} ||= []},
+        @{$def->{commands}};
   },
 };
 
