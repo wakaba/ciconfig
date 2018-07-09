@@ -141,6 +141,16 @@ $Options->{'circleci', 'tests'} = {
   },
 };
 
+$Options->{'circleci', 'make_deploy_branches'} = {
+  set => sub {
+    for my $branch (@{$_[1]}) {
+      $_[0]->{deployment}->{$branch}->{branch} = $branch;
+      push @{$_[0]->{deployment}->{$branch}->{commands} ||= []},
+          "make deploy-$branch";
+    }
+  },
+};
+
 $Options->{'circleci', 'deploy'} = {
   set => sub {
     my $def = $_[1];
