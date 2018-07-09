@@ -162,6 +162,42 @@ for (
       },
     },
   }}}],
+  [{circleci => {merger => 1}} => {'circle.yml' => {json => {
+    deployment => {
+      nightly => {
+        branch => 'nightly',
+        commands => [
+          'git rev-parse HEAD > head.txt',
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"',
+        ],
+      },
+      staging => {
+        branch => 'staging',
+        commands => [
+          'git rev-parse HEAD > head.txt',
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"',
+        ],
+      },
+    },
+  }}}],
+  [{circleci => {merger => {into => 'dev'}}} => {'circle.yml' => {json => {
+    deployment => {
+      nightly => {
+        branch => 'nightly',
+        commands => [
+          'git rev-parse HEAD > head.txt',
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"',
+        ],
+      },
+      staging => {
+        branch => 'staging',
+        commands => [
+          'git rev-parse HEAD > head.txt',
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"',
+        ],
+      },
+    },
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml)) {
