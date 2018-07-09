@@ -148,6 +148,20 @@ for (
       },
     },
   }}}],
+  [{circleci => {
+    make_deploy_branches => ['master', 'staging'],
+  }} => {'circle.yml' => {json => {
+    deployment => {
+      master => {
+        branch => 'master',
+        commands => ['make deploy-master'],
+      },
+      staging => {
+        branch => 'staging',
+        commands => ['make deploy-staging'],
+      },
+    },
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml)) {
