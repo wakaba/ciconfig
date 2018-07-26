@@ -129,6 +129,26 @@ for (
       },
     },
   }}}],
+  [{circleci => {heroku => {pushed => [
+    'abc', './foo bar',
+  ]}}} => {'circle.yml' => {json => {
+    dependencies => {override => [
+      'git config --global user.email "temp@circleci.test"',
+      'git config --global user.name "CircleCI"',
+    ]},
+    deployment => {
+      master => {
+        branch => 'master',
+        commands => [
+          'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
+          'make create-commit-for-heroku',
+          'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master',
+          'abc',
+          './foo bar',
+        ],
+      },
+    },
+  }}}],
   [{circleci => {deploy => ['true', 'false']}} => {'circle.yml' => {json => {
     deployment => {
       master => {

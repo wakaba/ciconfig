@@ -13,7 +13,7 @@ use warnings;
 package Path::Tiny;
 # ABSTRACT: File path utility
 
-our $VERSION = '0.106';
+our $VERSION = '0.104';
 
 # Dependencies
 use Config;
@@ -31,6 +31,7 @@ use constant {
     DIR      => 3,
     FILE     => 4,
     TEMP     => 5,
+    IS_BSD   => ( scalar $^O =~ /bsd$/ ),
     IS_WIN32 => ( $^O eq 'MSWin32' ),
 };
 
@@ -118,26 +119,26 @@ sub _symbolic_chmod {
     return $mode;
 }
 
-# flock doesn't work on NFS on BSD or on some filesystems like lustre.
-# Since program authors often can't control or detect that, we warn once
-# instead of being fatal if we can detect it and people who need it strict
-# can fatalize the 'flock' category
+# flock doesn't work on NFS on BSD.  Since program authors often can't control
+# or detect that, we warn once instead of being fatal if we can detect it and
+# people who need it strict can fatalize the 'flock' category
 
 #<<< No perltidy
-{ package flock; use warnings::register }
+{ package flock; use if Path::Tiny::IS_BSD(), 'warnings::register' }
 #>>>
 
-my $WARNED_NO_FLOCK = 0;
+my $WARNED_BSD_NFS = 0;
 
 sub _throw {
     my ( $self, $function, $file, $msg ) = @_;
-    if (   $function =~ /^flock/
-        && $! =~ /operation not supported|function not implemented/i
+    if (   IS_BSD()
+        && $function =~ /^flock/
+        && $! =~ /operation not supported/i
         && !warnings::fatal_enabled('flock') )
     {
-        if ( !$WARNED_NO_FLOCK ) {
-            warnings::warn( flock => "Flock not available: '$!': continuing in unsafe mode" );
-            $WARNED_NO_FLOCK++;
+        if ( !$WARNED_BSD_NFS ) {
+            warnings::warn( flock => "No flock for NFS on BSD: continuing in unsafe mode" );
+            $WARNED_BSD_NFS++;
         }
     }
     else {
@@ -510,9 +511,8 @@ sub absolute {
 #pod     path("foo.txt")->append_raw(@data);
 #pod     path("foo.txt")->append_utf8(@data);
 #pod
-#pod Appends data to a file.  The file is locked with C<flock> prior to writing
-#pod and closed afterwards.  An optional hash reference may be used to pass
-#pod options.  Valid options are:
+#pod Appends data to a file.  The file is locked with C<flock> prior to writing.  An
+#pod optional hash reference may be used to pass options.  Valid options are:
 #pod
 #pod =for :list
 #pod * C<binmode>: passed to C<binmode()> on the handle used for writing.
@@ -672,11 +672,6 @@ sub cached_temp {
 #pod Returns a new C<Path::Tiny> object relative to the original.  Works
 #pod like C<catfile> or C<catdir> from File::Spec, but without caring about
 #pod file or directories.
-#pod
-#pod B<WARNING>: because the argument could contain C<..> or refer to symlinks,
-#pod there is no guarantee that the new path refers to an actual descendent of
-#pod the original.  If this is important to you, transform parent and child with
-#pod L</realpath> and check them with L</subsumes>.
 #pod
 #pod Current API available since 0.001.
 #pod
@@ -1032,7 +1027,7 @@ sub filehandle {
     $binmode = "" unless defined $binmode;
 
     my ( $fh, $lock, $trunc );
-    if ( $HAS_FLOCK && $args->{locked} && !$ENV{PERL_PATH_TINY_NO_FLOCK} ) {
+    if ( $HAS_FLOCK && $args->{locked} ) {
         require Fcntl;
         # truncating file modes shouldn't truncate until lock acquired
         if ( grep { $opentype eq $_ } qw( > +> ) ) {
@@ -1350,7 +1345,7 @@ sub mkpath {
 #pod
 #pod Move the current path to the given destination path using Perl's
 #pod built-in L<rename|perlfunc/rename> function. Returns the result
-#pod of the C<rename> function (except it throws an exception if it fails).
+#pod of the C<rename> function.
 #pod
 #pod Current API available since 0.001.
 #pod
@@ -2548,7 +2543,9 @@ $Options->{'circleci', 'heroku'} = {
         'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
         @{(ref $_[1] eq 'HASH' && ref $_[1]->{prepare} eq 'ARRAY') ? $_[1]->{prepare} : []},
         'make create-commit-for-heroku',
-        'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master';
+        'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master',
+        @{(ref $_[1] eq 'HASH' && ref $_[1]->{pushed} eq 'ARRAY') ? $_[1]->{pushed} : []},
+    ;
   },
 };
 
