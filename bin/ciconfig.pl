@@ -24,6 +24,7 @@ for my $name (sort { $a cmp $b } keys %$output) {
   my $path = $root_path->child ($name);
   my $data = $output->{$name};
   if ($data->{json}) {
+    $path->parent->mkpath;
     $path->spew (perl2json_bytes_for_record ($data->{json}));
     if ($RunGit) {
       system 'git', 'add', $path;

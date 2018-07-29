@@ -2472,16 +2472,76 @@ package Main;
 use strict;
 use warnings;
 
+sub circle_step ($;%) {
+  my ($in, %args) = @_;
+  my $type = $args{deploy} ? 'deploy' : 'run';
+  if (ref $in eq 'HASH') {
+    my $command = each %$in;
+    if (defined $args{branch}) {
+      $command = join "\n",
+          q{if [ "${CIRCLE_BRANCH}" == "}.$args{branch}.q{" ]; then},
+          $command,
+          q{fi};
+    }
+    my $v = {command => $command};
+    $v->{background} = \1 if $in->{$command}->{background};
+    $v->{no_output_timeout} = $in->{$command}->{timeout} . 's'
+        if $in->{$command}->{timeout};
+    return {$type => $v};
+  } else {
+    my $command = $in;
+    if (defined $args{branch}) {
+      $command = join "\n",
+          q{if [ "${CIRCLE_BRANCH}" == "}.$args{branch}.q{" ]; then},
+          $command,
+          q{fi};
+    }
+    return {$type => {command => $command}};
+  }
+} # circle_step
+
 my $Platforms = {
   travisci => {
     file => '.travis.yml',
     set => sub {
-      push @{$_[0]->{jobs}->{include} ||= []}, {stage => 'test'};
+      unshift @{$_[0]->{jobs}->{include} ||= []}, {stage => 'test'};
     },
   },
   circleci => {
-    file => 'circle.yml', # 1.0
-    set => sub { },
+    file => '.circleci/config.yml',
+    set => sub {
+      my $json = $_[0];
+      $json->{version} = 2;
+      $json->{jobs}->{build}->{machine}->{enabled} = \1;
+      $json->{jobs}->{build}->{environment}->{CIRCLE_ARTIFACTS} = '/tmp/circle-artifacts';
+      $json->{jobs}->{build}->{steps} = ['checkout', circle_step ('mkdir -p $CIRCLE_ARTIFACTS')];
+      for ('_build', '_test') {
+        my $build = delete $json->{$_};
+        if (defined $build) {
+          push @{$json->{jobs}->{build}->{steps}}, map {
+            circle_step ($_);
+          } @$build;
+        }
+      }
+      push @{$json->{jobs}->{build}->{steps}}, {store_artifacts => {
+        path => '/tmp/circle-artifacts',
+      }};
+      for my $branch (sort { $a cmp $b } keys %{$json->{_deploy} or {}}) {
+        push @{$json->{jobs}->{build}->{steps}}, map {
+          circle_step ($_, deploy => 1, branch => $branch);
+        } @{$json->{_deploy}->{$branch}};
+      }
+      delete $json->{_deploy};
+
+      $json->{workflows} = {version => 2, build => {
+        jobs => ['build'],
+      }};
+    },
+  },
+  circleci1 => { # obsolete
+    file => 'circle.yml',
+    set => sub {
+    },
   },
 };
 
@@ -2534,12 +2594,11 @@ $Options->{'travisci', 'merger'} = {
 $Options->{'circleci', 'heroku'} = {
   set => sub {
     return unless $_[1];
-    push @{$_[0]->{dependencies}->{override} ||= []},
+    push @{$_[0]->{_build} ||= []}, join "\n",
         'git config --global user.email "temp@circleci.test"',
         'git config --global user.name "CircleCI"';
 
-    $_[0]->{deployment}->{master}->{branch} = 'master';
-    push @{$_[0]->{deployment}->{master}->{commands} ||= []},
+    push @{$_[0]->{_deploy}->{'master'} ||= []},
         'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
         @{(ref $_[1] eq 'HASH' && ref $_[1]->{prepare} eq 'ARRAY') ? $_[1]->{prepare} : []},
         'make create-commit-for-heroku',
@@ -2550,16 +2609,15 @@ $Options->{'circleci', 'heroku'} = {
 $Options->{'circleci', 'pmbp'} = {
   set => sub {
     return unless $_[1];
-    push @{$_[0]->{dependencies}->{override} ||= []}, 'make test-deps';
-    push @{$_[0]->{test}->{override} ||= []}, 'make test';
+    push @{$_[0]->{_build} ||= []}, 'make test-deps';
+    push @{$_[0]->{_test} ||= []}, 'make test';
   },
 };
 
 $Options->{'circleci', 'required_docker_images'} = {
   set => sub {
     return unless ref $_[1] eq 'ARRAY' and @{$_[1] or []};
-    push @{$_[0]->{machine}->{services} ||= []}, 'docker';
-    unshift @{$_[0]->{dependencies}->{override} ||= []},
+    unshift @{$_[0]->{_build} ||= []},
         'docker info',
         {
           (join ' && ', map {
@@ -2575,24 +2633,22 @@ $Options->{'circleci', 'docker-build'} = {
   set => sub {
     return unless $_[1];
     my $defs = ref $_[1] eq 'ARRAY' ? $_[1] : [$_[1]];
-    push @{$_[0]->{machine}->{services} ||= []}, 'docker';
-    push @{$_[0]->{dependencies}->{override} ||= []}, 'docker info';
+    push @{$_[0]->{_build} ||= []}, 'docker info';
     my $host = '';
     for my $def (@$defs) {
       $def = ref $def ? $def : {name => $def};
       die "No |name|" unless defined $def->{name};
       $def->{path} = '.' unless defined $def->{path};
       $def->{branch} = 'master' unless defined $def->{branch};
-      push @{$_[0]->{dependencies}->{override} ||= []},
+      push @{$_[0]->{_build} ||= []},
           'docker build -t ' . $def->{name} . ' ' . $def->{path};
-      $_[0]->{deployment}->{$def->{branch}}->{branch} = $def->{branch};
       if ($def->{name} =~ m{^([^/]+)/([^/]+)/([^/]+)$} and
           not $1 eq $host) {
-        push @{$_[0]->{deployment}->{$def->{branch}}->{commands} ||= []},
-            'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS '.$1;
+        push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
+            'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS '.$1.' || docker login -u $DOCKER_USER -p $DOCKER_PASS '.$1;
         $host = $1;
       }
-      push @{$_[0]->{deployment}->{$def->{branch}}->{commands} ||= []},
+      push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
           'docker push ' . $def->{name} . ' && ' .
           'curl -sSLf $BWALL_URL'.(defined $def->{bwall_suffix} ? '.' . $def->{bwall_suffix} : $def->{branch} eq 'master' ? '' : '.' . $def->{branch}).' -X POST';
     } # $def
@@ -2601,21 +2657,20 @@ $Options->{'circleci', 'docker-build'} = {
 
 $Options->{'circleci', 'build'} = {
   set => sub {
-    push @{$_[0]->{dependencies}->{override} ||= []}, @{$_[1]};
+    push @{$_[0]->{_build} ||= []}, @{$_[1]};
   },
 };
 
 $Options->{'circleci', 'tests'} = {
   set => sub {
-    push @{$_[0]->{test}->{override} ||= []}, @{$_[1]};
+    push @{$_[0]->{_test} ||= []}, @{$_[1]};
   },
 };
 
 $Options->{'circleci', 'make_deploy_branches'} = {
   set => sub {
     for my $branch (@{$_[1]}) {
-      $_[0]->{deployment}->{$branch}->{branch} = $branch;
-      push @{$_[0]->{deployment}->{$branch}->{commands} ||= []},
+      push @{$_[0]->{_deploy}->{$branch} ||= []},
           "make deploy-$branch";
     }
   },
@@ -2627,8 +2682,7 @@ $Options->{'circleci', 'deploy'} = {
     if (ref $_[1] eq 'ARRAY') {
       $def = {branch => 'master', commands => $_[1]};
     }
-    $_[0]->{deployment}->{$def->{branch}}->{branch} = $def->{branch};
-    push @{$_[0]->{deployment}->{$def->{branch}}->{commands} ||= []},
+    push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
         @{$def->{commands}};
   },
 };
@@ -2641,8 +2695,7 @@ $Options->{'circleci', 'merger'} = {
       $into = $_[1]->{into} if defined $_[1]->{into};
     }
     for my $branch (qw(staging nightly)) {
-      $_[0]->{deployment}->{$branch}->{branch} = $branch;
-      push @{$_[0]->{deployment}->{$branch}->{commands} ||= []},
+      push @{$_[0]->{_deploy}->{$branch} ||= []}, join "\n",
           'git rev-parse HEAD > head.txt',
           'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\"base\":\"'.$into.'\",\"head\":\"`cat head.txt`\",\"commit_message\":\"auto-merge $CIRCLE_BRANCH into '.$into.'\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"';
     } # $branch
@@ -2665,14 +2718,14 @@ sub generate ($$$) {
     die "Unknown platform |$platform|" unless defined $p_def;
     my $json = {};
 
-    $p_def->{set}->($json);
-
     for my $opt (sort { $a cmp $b } keys %{$input->{$platform}}) {
       my $o_def = $Options->{$platform, $opt};
       die "Unknown option |$platform|, |$opt|" unless defined $o_def;
       my $o_param = $input->{$platform}->{$opt};
       $o_def->{set}->($json, $o_param, $root_path);
     } # $opt
+
+    $p_def->{set}->($json);
 
     $data->{$p_def->{file}} = {json => $json};
   }
@@ -2720,6 +2773,7 @@ for my $name (sort { $a cmp $b } keys %$output) {
   my $path = $root_path->child ($name);
   my $data = $output->{$name};
   if ($data->{json}) {
+    $path->parent->mkpath;
     $path->spew (perl2json_bytes_for_record ($data->{json}));
     if ($RunGit) {
       system 'git', 'add', $path;
