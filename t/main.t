@@ -84,143 +84,203 @@ for (
     ]},
   }}}],
 
-  [{circleci => {}} => {'circle.yml' => {json => {}}}],
-  [{circleci => {gaa => 1}} => {'circle.yml' => {json => {}}}],
-  [{circleci => {required_docker_images => ['a/b', 'a/b/c']}} => {'circle.yml' => {json => {
-    machine => {services => ['docker']},
-    dependencies => {override => [
-      'docker info',
-      {'docker pull a/b && docker pull a/b/c' => {background => 1}},
-    ]},
+  [{circleci => {}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
-  [{circleci => {heroku => 1}} => {'circle.yml' => {json => {
-    dependencies => {override => [
-      'git config --global user.email "temp@circleci.test"',
-      'git config --global user.name "CircleCI"',
-    ]},
-    deployment => {
-      master => {
-        branch => 'master',
-        commands => [
-          'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
-          'make create-commit-for-heroku',
-          'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master',
-        ],
-      },
-    },
+  [{circleci => {gaa => 1}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
+  [{circleci => {required_docker_images => ['a/b', 'a/b/c']}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'docker info'}},
+        {run => {command => 'docker pull a/b && docker pull a/b/c',
+                 background => \1}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
+  [{circleci => {heroku => 1}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 
+      'git config --global user.email "temp@circleci.test"' . "\x0A" .
+      'git config --global user.name "CircleCI"'
+        }},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
   [{circleci => {heroku => {prepare => [
     'abc', './foo bar',
-  ]}}} => {'circle.yml' => {json => {
-    dependencies => {override => [
-      'git config --global user.email "temp@circleci.test"',
-      'git config --global user.name "CircleCI"',
-    ]},
-    deployment => {
-      master => {
-        branch => 'master',
-        commands => [
-          'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
-          'abc',
-          './foo bar',
-          'make create-commit-for-heroku',
-          'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master',
-        ],
-      },
-    },
+  ]}}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 
+      'git config --global user.email "temp@circleci.test"' . "\x0A" .
+      'git config --global user.name "CircleCI"'
+        }},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'abc' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . './foo bar' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
   [{circleci => {heroku => {pushed => [
     'abc', './foo bar',
-  ]}}} => {'circle.yml' => {json => {
-    dependencies => {override => [
-      'git config --global user.email "temp@circleci.test"',
-      'git config --global user.name "CircleCI"',
-    ]},
-    deployment => {
-      master => {
-        branch => 'master',
-        commands => [
-          'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
-          'make create-commit-for-heroku',
-          'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master',
-          'abc',
-          './foo bar',
-        ],
-      },
-    },
+  ]}}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 
+      'git config --global user.email "temp@circleci.test"' . "\x0A" .
+      'git config --global user.name "CircleCI"'
+        }},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'abc' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . './foo bar' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
-  [{circleci => {deploy => ['true', 'false']}} => {'circle.yml' => {json => {
-    deployment => {
-      master => {
-        branch => 'master',
-        commands => ['true', 'false'],
-      },
-    },
+  [{circleci => {deploy => ['true', 'false']}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'true' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'false' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
   [{circleci => {deploy => {
     branch => 'oge',
     commands => ['true', 'false'],
-  }}} => {'circle.yml' => {json => {
-    deployment => {
-      oge => {
-        branch => 'oge',
-        commands => ['true', 'false'],
-      },
-    },
+  }}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "oge" ]; then} . "\x0A" . 'true' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "oge" ]; then} . "\x0A" . 'false' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
   [{circleci => {
     make_deploy_branches => ['master', 'staging'],
-  }} => {'circle.yml' => {json => {
-    deployment => {
-      master => {
-        branch => 'master',
-        commands => ['make deploy-master'],
-      },
-      staging => {
-        branch => 'staging',
-        commands => ['make deploy-staging'],
-      },
-    },
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'make deploy-master' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "staging" ]; then} . "\x0A" . 'make deploy-staging' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
-  [{circleci => {merger => 1}} => {'circle.yml' => {json => {
-    deployment => {
-      nightly => {
-        branch => 'nightly',
-        commands => [
-          'git rev-parse HEAD > head.txt',
-          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"',
-        ],
-      },
-      staging => {
-        branch => 'staging',
-        commands => [
-          'git rev-parse HEAD > head.txt',
-          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"',
-        ],
-      },
-    },
+  [{circleci => {merger => 1}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "nightly" ]; then} . "\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "staging" ]; then} . "\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
-  [{circleci => {merger => {into => 'dev'}}} => {'circle.yml' => {json => {
-    deployment => {
-      nightly => {
-        branch => 'nightly',
-        commands => [
-          'git rev-parse HEAD > head.txt',
-          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"',
-        ],
-      },
-      staging => {
-        branch => 'staging',
-        commands => [
-          'git rev-parse HEAD > head.txt',
-          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"',
-        ],
-      },
-    },
+  [{circleci => {merger => {into => 'dev'}}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "nightly" ]; then} . "\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "staging" ]; then} . "\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
 ) {
   my ($input, $expected) = @$_;
-  for (qw(.travis.yml circle.yml)) {
+  for (qw(.travis.yml circle.yml .circleci/config.yml)) {
     $expected->{$_} ||= {remove => 1};
   }
   test {
