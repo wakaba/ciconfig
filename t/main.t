@@ -278,6 +278,22 @@ for (
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
+  [{circleci => {awscli => 1}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => "((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev\n".
+                 "sudo pip install awscli --upgrade\n".
+                 "aws --version"}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml .circleci/config.yml)) {
