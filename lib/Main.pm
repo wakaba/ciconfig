@@ -10,6 +10,7 @@ sub circle_step ($;%) {
     if (defined $args{branch}) {
       $command = join "\n",
           q{if [ "${CIRCLE_BRANCH}" == "}.$args{branch}.q{" ]; then},
+          q{true},
           $command,
           q{fi};
     }
@@ -23,6 +24,7 @@ sub circle_step ($;%) {
     if (defined $args{branch}) {
       $command = join "\n",
           q{if [ "${CIRCLE_BRANCH}" == "}.$args{branch}.q{" ]; then},
+          q{true},
           $command,
           q{fi};
     }
@@ -231,6 +233,16 @@ $Options->{'circleci', 'merger'} = {
           'git rev-parse HEAD > head.txt',
           'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\"base\":\"'.$into.'\",\"head\":\"`cat head.txt`\",\"commit_message\":\"auto-merge $CIRCLE_BRANCH into '.$into.'\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"';
     } # $branch
+  },
+};
+
+$Options->{'circleci', 'awscli'} = {
+  set => sub {
+    return unless $_[1];
+    push @{$_[0]->{_build} ||= []}, join "\n",
+        "((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev",
+        "sudo pip install awscli --upgrade",
+        "aws --version";
   },
 };
 

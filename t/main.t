@@ -139,9 +139,9 @@ for (
       'git config --global user.name "CircleCI"'
         }},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -161,11 +161,11 @@ for (
       'git config --global user.name "CircleCI"'
         }},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'abc' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . './foo bar' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'abc' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . './foo bar' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -185,11 +185,11 @@ for (
       'git config --global user.name "CircleCI"'
         }},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'abc' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . './foo bar' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'abc' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . './foo bar' . "\x0Afi"}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -203,8 +203,8 @@ for (
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'true' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'false' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'true' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'false' . "\x0Afi"}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -221,8 +221,8 @@ for (
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "oge" ]; then} . "\x0A" . 'true' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "oge" ]; then} . "\x0A" . 'false' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "oge" ]; then} . "\x0Atrue\x0A" . 'true' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "oge" ]; then} . "\x0Atrue\x0A" . 'false' . "\x0Afi"}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -238,8 +238,8 @@ for (
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0A" . 'make deploy-master' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "staging" ]; then} . "\x0A" . 'make deploy-staging' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "master" ]; then} . "\x0Atrue\x0A" . 'make deploy-master' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "staging" ]; then} . "\x0Atrue\x0A" . 'make deploy-staging' . "\x0Afi"}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -253,9 +253,9 @@ for (
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "nightly" ]; then} . "\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "nightly" ]; then} . "\x0Atrue\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
           'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "staging" ]; then} . "\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "staging" ]; then} . "\x0Atrue\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
           'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
       ],
     }},
@@ -270,10 +270,26 @@ for (
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "nightly" ]; then} . "\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "nightly" ]; then} . "\x0Atrue\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
           'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "staging" ]; then} . "\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == "staging" ]; then} . "\x0Atrue\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
           'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
+  [{circleci => {awscli => 1}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => "((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev\n".
+                 "sudo pip install awscli --upgrade\n".
+                 "aws --version"}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
