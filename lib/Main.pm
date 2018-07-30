@@ -10,6 +10,7 @@ sub circle_step ($;%) {
     if (defined $args{branch}) {
       $command = join "\n",
           q{if [ "${CIRCLE_BRANCH}" == "}.$args{branch}.q{" ]; then},
+          q{true},
           $command,
           q{fi};
     }
@@ -23,6 +24,7 @@ sub circle_step ($;%) {
     if (defined $args{branch}) {
       $command = join "\n",
           q{if [ "${CIRCLE_BRANCH}" == "}.$args{branch}.q{" ]; then},
+          q{true},
           $command,
           q{fi};
     }
