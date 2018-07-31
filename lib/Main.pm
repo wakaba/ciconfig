@@ -25,13 +25,21 @@ sub circle_step ($;%) {
         q{fi}
         if defined $_;
   }
+
+  my $type = $args{deploy} ? 'deploy' : 'run';
+  if (exists $in->{parallel} and not $in->{parallel} and
+      not $type eq 'deploy') {
+    $command = join "\n",
+        q{if [ "${CIRCLE_NODE_INDEX}" == "0" ]; then},
+        q{true},
+        $command,
+        q{fi};
+  }
+  
   my $v = {command => $command};
   $v->{background} = \1 if $in->{background};
   $v->{no_output_timeout} = $in->{timeout} . 's'
       if $in->{timeout};
-
-  my $type = $args{deploy} ? 'deploy' : 'run';
-  $type = 'deploy' if exists $in->{parallel} and not $in->{parallel};
 
   return {$type => $v};
 } # circle_step

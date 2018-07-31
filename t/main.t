@@ -338,7 +338,7 @@ for (
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'a'}},
-        {deploy => {command => 'b'}},
+        {run => {command => q{if [ "${CIRCLE_NODE_INDEX}" == "0" ]; then} . "\x0A" . "true\x0A" . 'b' . "\x0Afi"}},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
       ],
     }},
