@@ -294,6 +294,56 @@ for (
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
+  [{circleci => {parallel => 1}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      parallelism => 2,
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
+  [{circleci => {build => [
+    {command => 'a'},
+    {command => 'b', branch => 'c'},
+  ]}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'a'}},
+        {run => {command => q{if [ "${CIRCLE_BRANCH}" == "c" ]; then} . "\x0Atrue\x0A" . 'b' . "\x0Afi"}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
+  [{circleci => {build => [
+    {command => 'a', parallel => 1},
+    {command => 'b', parallel => 0},
+  ]}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'a'}},
+        {deploy => {command => 'b'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml .circleci/config.yml)) {

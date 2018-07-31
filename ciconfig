@@ -2479,32 +2479,36 @@ use warnings;
 
 sub circle_step ($;%) {
   my ($in, %args) = @_;
-  my $type = $args{deploy} ? 'deploy' : 'run';
+
   if (ref $in eq 'HASH') {
-    my $command = each %$in;
-    if (defined $args{branch}) {
-      $command = join "\n",
-          q{if [ "${CIRCLE_BRANCH}" == "}.$args{branch}.q{" ]; then},
-          q{true},
-          $command,
-          q{fi};
+    if (defined $in->{command}) {
+      #
+    } else {
+      my $command = each %$in;
+      $in = {%{$in->{$command}}, command => $command};
     }
-    my $v = {command => $command};
-    $v->{background} = \1 if $in->{$command}->{background};
-    $v->{no_output_timeout} = $in->{$command}->{timeout} . 's'
-        if $in->{$command}->{timeout};
-    return {$type => $v};
   } else {
-    my $command = $in;
-    if (defined $args{branch}) {
-      $command = join "\n",
-          q{if [ "${CIRCLE_BRANCH}" == "}.$args{branch}.q{" ]; then},
-          q{true},
-          $command,
-          q{fi};
-    }
-    return {$type => {command => $command}};
+    $in = {command => $in};
   }
+
+  my $command = $in->{command};
+  for ($args{branch}, $in->{branch}) {
+    $command = join "\n",
+        q{if [ "${CIRCLE_BRANCH}" == "}.(quotemeta $_).q{" ]; then},
+        q{true},
+        $command,
+        q{fi}
+        if defined $_;
+  }
+  my $v = {command => $command};
+  $v->{background} = \1 if $in->{background};
+  $v->{no_output_timeout} = $in->{timeout} . 's'
+      if $in->{timeout};
+
+  my $type = $args{deploy} ? 'deploy' : 'run';
+  $type = 'deploy' if exists $in->{parallel} and not $in->{parallel};
+
+  return {$type => $v};
 } # circle_step
 
 my $Platforms = {
@@ -2718,6 +2722,13 @@ $Options->{'circleci', 'awscli'} = {
         "((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev",
         "sudo pip install awscli --upgrade",
         "aws --version";
+  },
+};
+
+$Options->{'circleci', 'parallel'} = {
+  set => sub {
+    return unless $_[1];
+    $_[0]->{jobs}->{build}->{parallelism} = 2;
   },
 };
 
