@@ -7,7 +7,9 @@ sub circle_step ($;%) {
 
   if (ref $in eq 'HASH') {
     if (defined $in->{command}) {
-      #
+      if (ref $in->{command} eq 'ARRAY') {
+        $in->{command} = join "\n", @{$in->{command}};
+      }
     } else {
       my $command = each %$in;
       $in = {%{$in->{$command}}, command => $command};
