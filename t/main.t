@@ -344,6 +344,22 @@ for (
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
+  [{circleci => {build => [
+    {command => ['a', 'b']},
+  ]}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'a' . "\n" . 'b'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml .circleci/config.yml)) {
