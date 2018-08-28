@@ -2,6 +2,12 @@ package Main;
 use strict;
 use warnings;
 
+sub shellquote ($) {
+  my $s = shift;
+  $s =~ s/([\\'])/\\$1/g;
+  return "'$s'";
+} # shellquote
+
 sub circle_step ($;%) {
   my ($in, %args) = @_;
 
@@ -21,7 +27,7 @@ sub circle_step ($;%) {
   my $command = $in->{command};
   for ($args{branch}, $in->{branch}) {
     $command = join "\n",
-        q{if [ "${CIRCLE_BRANCH}" == "}.(quotemeta $_).q{" ]; then},
+        q{if [ "${CIRCLE_BRANCH}" == }.(shellquote $_).q{ ]; then},
         q{true},
         $command,
         q{fi}
