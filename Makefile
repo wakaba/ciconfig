@@ -5,13 +5,15 @@ CURL = curl
 GIT = git
 PERL = ./perl
 
-updatenightly: local/bin/pmbp.pl build
+updatenightly: local/bin/pmbp.pl clean-update build
 	$(GIT) add ciconfig
 	REMOVE_UNUSED=1 RUN_GIT=1 perl ciconfig
 	$(CURL) -s -S -L -f https://gist.githubusercontent.com/wakaba/34a71d3137a52abb562d/raw/gistfile1.txt | sh
 	$(GIT) add modules t_deps/modules
 	perl local/bin/pmbp.pl --update
 	$(GIT) add config
+clean-update:
+	rm -fr ./ciconfig
 
 ## ------ Setup ------
 

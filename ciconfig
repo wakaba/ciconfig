@@ -2711,6 +2711,15 @@ $Options->{'circleci', 'deploy'} = {
   },
 };
 
+$Options->{'circleci', 'deploy_branch'} = {
+  set => sub {
+    my $def = $_[1];
+    for my $branch (sort { $a cmp $b } keys %$def) {
+      push @{$_[0]->{_deploy}->{$branch} ||= []}, @{$def->{$branch}};
+    }
+  },
+};
+
 $Options->{'circleci', 'merger'} = {
   set => sub {
     return unless $_[1];
