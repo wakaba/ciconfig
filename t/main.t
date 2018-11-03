@@ -3,7 +3,7 @@ use warnings;
 use Path::Tiny;
 use lib glob path (__FILE__)->parent->parent->child ('t_deps/modules/*/lib');
 use Test::X1;
-use Test::Differences;
+use Test::More;
 use Main;
 
 for (
@@ -444,7 +444,9 @@ for (
     my $c = shift;
     my $path = path (__FILE__)->parent->parent->child ('t_deps/data');
     my $output = Main->generate ($input, $path);
-    eq_or_diff $output, $expected;
+    #use Test::Differences;
+    #eq_or_diff $output, $expected;
+    is_deeply $output, $expected;
     done $c;
   } n => 1;
 }
