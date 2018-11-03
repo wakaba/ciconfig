@@ -13,7 +13,7 @@ use warnings;
 package Path::Tiny;
 # ABSTRACT: File path utility
 
-our $VERSION = '0.108';
+our $VERSION = '0.104';
 
 # Dependencies
 use Config;
@@ -31,6 +31,7 @@ use constant {
     DIR      => 3,
     FILE     => 4,
     TEMP     => 5,
+    IS_BSD   => ( scalar $^O =~ /bsd$/ ),
     IS_WIN32 => ( $^O eq 'MSWin32' ),
 };
 
@@ -48,26 +49,13 @@ sub THAW   { return path( $_[2] ) }
 my $HAS_UU; # has Unicode::UTF8; lazily populated
 
 sub _check_UU {
-    local $SIG{__DIE__}; # prevent outer handler from being called
-    !!eval {
-        require Unicode::UTF8;
-        Unicode::UTF8->VERSION(0.58);
-        1;
-    };
+    !!eval { require Unicode::UTF8; Unicode::UTF8->VERSION(0.58); 1 };
 }
 
-my $HAS_PU;              # has PerlIO::utf8_strict; lazily populated
+my $HAS_PU; # has PerlIO::utf8_strict; lazily populated
 
 sub _check_PU {
-    local $SIG{__DIE__}; # prevent outer handler from being called
-    !!eval {
-        # MUST preload Encode or $SIG{__DIE__} localization fails
-        # on some Perl 5.8.8 (maybe other 5.8.*) compiled with -O2.
-        require Encode;
-        require PerlIO::utf8_strict;
-        PerlIO::utf8_strict->VERSION(0.003);
-        1;
-    };
+    !!eval { require PerlIO::utf8_strict; PerlIO::utf8_strict->VERSION(0.003); 1 };
 }
 
 my $HAS_FLOCK = $Config{d_flock} || $Config{d_fcntl_can_lock} || $Config{d_lockf};
@@ -131,26 +119,26 @@ sub _symbolic_chmod {
     return $mode;
 }
 
-# flock doesn't work on NFS on BSD or on some filesystems like lustre.
-# Since program authors often can't control or detect that, we warn once
-# instead of being fatal if we can detect it and people who need it strict
-# can fatalize the 'flock' category
+# flock doesn't work on NFS on BSD.  Since program authors often can't control
+# or detect that, we warn once instead of being fatal if we can detect it and
+# people who need it strict can fatalize the 'flock' category
 
 #<<< No perltidy
-{ package flock; use warnings::register }
+{ package flock; use if Path::Tiny::IS_BSD(), 'warnings::register' }
 #>>>
 
-my $WARNED_NO_FLOCK = 0;
+my $WARNED_BSD_NFS = 0;
 
 sub _throw {
     my ( $self, $function, $file, $msg ) = @_;
-    if (   $function =~ /^flock/
-        && $! =~ /operation not supported|function not implemented/i
+    if (   IS_BSD()
+        && $function =~ /^flock/
+        && $! =~ /operation not supported/i
         && !warnings::fatal_enabled('flock') )
     {
-        if ( !$WARNED_NO_FLOCK ) {
-            warnings::warn( flock => "Flock not available: '$!': continuing in unsafe mode" );
-            $WARNED_NO_FLOCK++;
+        if ( !$WARNED_BSD_NFS ) {
+            warnings::warn( flock => "No flock for NFS on BSD: continuing in unsafe mode" );
+            $WARNED_BSD_NFS++;
         }
     }
     else {
@@ -523,9 +511,8 @@ sub absolute {
 #pod     path("foo.txt")->append_raw(@data);
 #pod     path("foo.txt")->append_utf8(@data);
 #pod
-#pod Appends data to a file.  The file is locked with C<flock> prior to writing
-#pod and closed afterwards.  An optional hash reference may be used to pass
-#pod options.  Valid options are:
+#pod Appends data to a file.  The file is locked with C<flock> prior to writing.  An
+#pod optional hash reference may be used to pass options.  Valid options are:
 #pod
 #pod =for :list
 #pod * C<binmode>: passed to C<binmode()> on the handle used for writing.
@@ -685,11 +672,6 @@ sub cached_temp {
 #pod Returns a new C<Path::Tiny> object relative to the original.  Works
 #pod like C<catfile> or C<catdir> from File::Spec, but without caring about
 #pod file or directories.
-#pod
-#pod B<WARNING>: because the argument could contain C<..> or refer to symlinks,
-#pod there is no guarantee that the new path refers to an actual descendent of
-#pod the original.  If this is important to you, transform parent and child with
-#pod L</realpath> and check them with L</subsumes>.
 #pod
 #pod Current API available since 0.001.
 #pod
@@ -1045,7 +1027,7 @@ sub filehandle {
     $binmode = "" unless defined $binmode;
 
     my ( $fh, $lock, $trunc );
-    if ( $HAS_FLOCK && $args->{locked} && !$ENV{PERL_PATH_TINY_NO_FLOCK} ) {
+    if ( $HAS_FLOCK && $args->{locked} ) {
         require Fcntl;
         # truncating file modes shouldn't truncate until lock acquired
         if ( grep { $opentype eq $_ } qw( > +> ) ) {
@@ -1363,7 +1345,7 @@ sub mkpath {
 #pod
 #pod Move the current path to the given destination path using Perl's
 #pod built-in L<rename|perlfunc/rename> function. Returns the result
-#pod of the C<rename> function (except it throws an exception if it fails).
+#pod of the C<rename> function.
 #pod
 #pod Current API available since 0.001.
 #pod
@@ -2766,7 +2748,13 @@ $Options->{'circleci', 'awscli'} = {
 $Options->{'circleci', 'parallel'} = {
   set => sub {
     return unless $_[1];
-    $_[0]->{jobs}->{build}->{parallelism} = 2;
+    return if ref $_[1] eq 'SCALAR' and not ${$_[1]};
+    my $value = 2;
+    if (not ref $_[1]) {
+      $value = 0+$_[1];
+      $value = 2 if $value < 2;
+    }
+    $_[0]->{jobs}->{build}->{parallelism} = $value;
   },
 };
 

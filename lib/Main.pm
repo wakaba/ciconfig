@@ -278,7 +278,13 @@ $Options->{'circleci', 'awscli'} = {
 $Options->{'circleci', 'parallel'} = {
   set => sub {
     return unless $_[1];
-    $_[0]->{jobs}->{build}->{parallelism} = 2;
+    return if ref $_[1] eq 'SCALAR' and not ${$_[1]};
+    my $value = 2;
+    if (not ref $_[1]) {
+      $value = 0+$_[1];
+      $value = 2 if $value < 2;
+    }
+    $_[0]->{jobs}->{build}->{parallelism} = $value;
   },
 };
 
