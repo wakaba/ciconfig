@@ -2676,7 +2676,7 @@ $Options->{'circleci', 'docker-build'} = {
     return unless $_[1];
     my $defs = ref $_[1] eq 'ARRAY' ? $_[1] : [$_[1]];
     push @{$_[0]->{_build} ||= []}, 'docker info';
-    my $host = '';
+    my $has_login = {};
     for my $def (@$defs) {
       $def = ref $def ? $def : {name => $def};
       die "No |name|" unless defined $def->{name};
@@ -2684,11 +2684,18 @@ $Options->{'circleci', 'docker-build'} = {
       $def->{branch} = 'master' unless defined $def->{branch};
       push @{$_[0]->{_build} ||= []},
           'docker build -t ' . $def->{name} . ' ' . $def->{path};
-      if ($def->{name} =~ m{^([^/]+)/([^/]+)/([^/]+)$} and
-          not $1 eq $host) {
-        push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
-            'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS '.$1.' || docker login -u $DOCKER_USER -p $DOCKER_PASS '.$1;
-        $host = $1;
+      if ($def->{name} =~ m{^([^/]+)/([^/]+)/([^/]+)$}) {
+        if (not $has_login->{$1}) {
+          push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
+              'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS '.$1.' || docker login -u $DOCKER_USER -p $DOCKER_PASS '.$1;
+          $has_login->{$1} = 1;
+        }
+      } else {
+        if (not $has_login->{''}) {
+          push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
+              'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS || docker login -u $DOCKER_USER -p $DOCKER_PASS';
+          $has_login->{''} = 1;
+        }
       }
       push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
           'docker push ' . $def->{name} . ' && ' .

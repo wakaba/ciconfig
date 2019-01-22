@@ -110,6 +110,40 @@ for (
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
+  [{circleci => {'docker-build' => 'abc/def'}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'docker info'}},
+        {run => {command => 'docker build -t abc/def .'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} ."\x0Atrue\x0A" . 'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS || docker login -u $DOCKER_USER -p $DOCKER_PASS' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} ."\x0Atrue\x0A" . 'docker push abc/def && curl -sSLf $BWALL_URL -X POST' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
+  [{circleci => {'docker-build' => 'xyz/abc/def'}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'docker info'}},
+        {run => {command => 'docker build -t xyz/abc/def .'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} ."\x0Atrue\x0A" . 'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS xyz || docker login -u $DOCKER_USER -p $DOCKER_PASS xyz' . "\x0Afi"}},
+        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} ."\x0Atrue\x0A" . 'docker push xyz/abc/def && curl -sSLf $BWALL_URL -X POST' . "\x0Afi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
   [{circleci => {required_docker_images => ['a/b', 'a/b/c']}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
