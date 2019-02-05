@@ -320,7 +320,7 @@ for (
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {run => {command => "((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev\n".
+        {run => {command => "(((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev) || (sudo apt-get update && sudo apt-get install -y python-dev)\n".
                  "sudo pip install awscli --upgrade\n".
                  "aws --version"}},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
