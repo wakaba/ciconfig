@@ -2,6 +2,6 @@ AnyEvent~7.16
 Carp~1.50
 Filter::Util::Call~1.59
 Path::Tiny~0.108
-Scalar::Util~1.50
+Scalar::Util~1.51
 Term::ANSIColor~4.06
 Test::Builder~1.302164
