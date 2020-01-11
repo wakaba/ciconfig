@@ -64,7 +64,7 @@ my $Platforms = {
     set => sub {
       my $json = $_[0];
       $json->{version} = 2;
-      $json->{workflows} = {version => 2};
+      $json->{workflows}->{version} = 2;
       $json->{jobs} ||= {};
       if (delete $json->{_empty}) {
         for (qw(_build _test _deploy)) {
@@ -313,19 +313,54 @@ $Options->{'circleci', 'empty'} = {
 
 $Options->{'circleci', 'gaa'} = {
   set => sub {
-    # XXX
+    my $json = $_[0];
+    $json->{jobs}->{gaa4} = {
+      "environment" => {
+        "CIRCLE_ARTIFACTS" => "/tmp/circle-artifacts",
+      },
+      "machine" => {
+        "enabled" => \1,
+      },
+      "steps" => [
+        "checkout",
+        circle_step ("make updatenightly"),
+        circle_step ("git commit -m auto", deploy => 1),
+        circle_step ("git push origin +nightly", deploy => 1),
+      ],
+    };
+    my $hour = int ($json->{_random_day_time} / 60);
+    my $minute = ($json->{_random_day_time}) % 60;
+    $json->{workflows}->{gaa4} = {
+      "jobs" => ["gaa4"],
+      "triggers" => [
+        {
+          "schedule" => {
+            "cron" => "$minute $hour * * *",
+            "filters" => {
+              "branches" => {
+                "only" => [
+                  "staging"
+                ]
+              }
+            }
+          }
+        }
+      ],
+    };
   },
 };
 
-sub generate ($$$) {
-  my ($class, $input, $root_path) = @_;
+sub generate ($$$;%) {
+  my ($class, $input, $root_path, %args) = @_;
 
   my $data = {};
+  my $random_day_time = ((($args{input_length} || 0) + 12*60 + 21)) % (24*60);
 
   for my $platform (sort { $a cmp $b } keys %$input) {
     my $p_def = $Platforms->{$platform};
     die "Unknown platform |$platform|" unless defined $p_def;
     my $json = {};
+    local $json->{_random_day_time} = $random_day_time;
 
     for my $opt (sort { $a cmp $b } keys %{$input->{$platform}}) {
       my $o_def = $Options->{$platform, $opt};

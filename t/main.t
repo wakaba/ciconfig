@@ -5,6 +5,7 @@ use lib glob path (__FILE__)->parent->parent->child ('t_deps/modules/*/lib');
 use Test::X1;
 use Test::More;
 use Main;
+use JSON::PS;
 
 for (
   [{} => {}],
@@ -85,19 +86,6 @@ for (
   }}}],
 
   [{circleci => {}} => {'.circleci/config.yml' => {json => {
-    version => 2,
-    jobs => {build => {
-      machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
-      steps => [
-        'checkout',
-        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
-      ],
-    }},
-    workflows => {version => 2, build => {jobs => ['build']}},
-  }}}],
-  [{circleci => {gaa => 1}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
@@ -476,6 +464,82 @@ for (
     jobs => {},
     workflows => {version => 2},
   }}}],
+  [{circleci => {
+    gaa => 1,
+    empty => 1,
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {
+      gaa4 => {
+        machine => {enabled => \1},
+        environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+        steps => [
+          "checkout",
+          {run => {command => 'make updatenightly'}},
+          {deploy => {command => 'git commit -m auto'}},
+          {deploy => {command => 'git push origin +nightly'}},
+        ],
+      },
+    },
+    workflows => {version => 2, gaa4 => {
+      jobs => ['gaa4'],
+      "triggers" => [
+        {
+          "schedule" => {
+            "cron" => "23 13 * * *",
+            "filters" => {
+              "branches" => {
+                "only" => [
+                  "staging"
+                ]
+              }
+            }
+          }
+        }
+      ],
+    }},
+  }}}],
+  [{circleci => {gaa => 1}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {
+      gaa4 => {
+        machine => {enabled => \1},
+        environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+        steps => [
+          "checkout",
+          {run => {command => 'make updatenightly'}},
+          {deploy => {command => 'git commit -m auto'}},
+          {deploy => {command => 'git push origin +nightly'}},
+        ],
+      },
+      build => {
+        machine => {enabled => \1},
+        environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+        steps => [
+          'checkout',
+          {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+          {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        ],
+      },
+    },
+    workflows => {version => 2, , gaa4 => {
+      jobs => ['gaa4'],
+      "triggers" => [
+        {
+          "schedule" => {
+            "cron" => "4 13 * * *",
+            "filters" => {
+              "branches" => {
+                "only" => [
+                  "staging"
+                ]
+              }
+            }
+          }
+        }
+      ],
+    }, build => {jobs => ['build']}},
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml .circleci/config.yml)) {
@@ -484,7 +548,7 @@ for (
   test {
     my $c = shift;
     my $path = path (__FILE__)->parent->parent->child ('t_deps/data');
-    my $output = Main->generate ($input, $path);
+    my $output = Main->generate ($input, $path, input_length => length perl2json_bytes_for_record $input);
     #use Test::Differences;
     #eq_or_diff $output, $expected;
     is_deeply $output, $expected;
