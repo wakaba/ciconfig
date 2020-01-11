@@ -479,7 +479,7 @@ for (
           {run => {command => 'make deps'}},
           {run => {command => 'make updatenightly'}},
           {deploy => {command => 'git commit -m auto'}},
-          {deploy => {command => 'git push origin +nightly'}},
+          {deploy => {command => 'git push origin +`git rev-parse HEAD`:refs/heads/nightly'}},
         ],
       },
     },
@@ -513,7 +513,7 @@ for (
           {run => {command => 'make deps'}},
           {run => {command => 'make updatenightly'}},
           {deploy => {command => 'git commit -m auto'}},
-          {deploy => {command => 'git push origin +nightly'}},
+          {deploy => {command => 'git push origin +`git rev-parse HEAD`:refs/heads/nightly'}},
         ],
       },
       build => {

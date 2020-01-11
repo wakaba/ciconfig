@@ -2818,7 +2818,7 @@ $Options->{'circleci', 'gaa'} = {
         circle_step ("make deps"),
         circle_step ("make updatenightly"),
         circle_step ("git commit -m auto", deploy => 1),
-        circle_step ("git push origin +nightly", deploy => 1),
+        circle_step ("git push origin +`git rev-parse HEAD`:refs/heads/nightly", deploy => 1),
       ],
     };
     my $hour = int ($json->{_random_day_time} / 60);
