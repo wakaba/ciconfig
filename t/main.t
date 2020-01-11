@@ -475,6 +475,7 @@ for (
         environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
         steps => [
           "checkout",
+          {run => {command => 'make deps'}},
           {run => {command => 'make updatenightly'}},
           {deploy => {command => 'git commit -m auto'}},
           {deploy => {command => 'git push origin +nightly'}},
@@ -507,6 +508,7 @@ for (
         environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
         steps => [
           "checkout",
+          {run => {command => 'make deps'}},
           {run => {command => 'make updatenightly'}},
           {deploy => {command => 'git commit -m auto'}},
           {deploy => {command => 'git push origin +nightly'}},

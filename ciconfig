@@ -2811,6 +2811,7 @@ $Options->{'circleci', 'gaa'} = {
       },
       "steps" => [
         "checkout",
+        circle_step ("make deps"),
         circle_step ("make updatenightly"),
         circle_step ("git commit -m auto", deploy => 1),
         circle_step ("git push origin +nightly", deploy => 1),
