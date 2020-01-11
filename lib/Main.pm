@@ -323,6 +323,10 @@ $Options->{'circleci', 'gaa'} = {
       },
       "steps" => [
         "checkout",
+        circle_step (join ";",
+          'git config --global user.email "temp@circleci.test"',
+          'git config --global user.name "CircleCI"',
+        ),
         circle_step ("make deps"),
         circle_step ("make updatenightly"),
         circle_step ("git commit -m auto", deploy => 1),

@@ -475,6 +475,7 @@ for (
         environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
         steps => [
           "checkout",
+          {run => {command => 'git config --global user.email "temp@circleci.test";git config --global user.name "CircleCI"'}},
           {run => {command => 'make deps'}},
           {run => {command => 'make updatenightly'}},
           {deploy => {command => 'git commit -m auto'}},
@@ -508,6 +509,7 @@ for (
         environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
         steps => [
           "checkout",
+          {run => {command => 'git config --global user.email "temp@circleci.test";git config --global user.name "CircleCI"'}},
           {run => {command => 'make deps'}},
           {run => {command => 'make updatenightly'}},
           {deploy => {command => 'git commit -m auto'}},
