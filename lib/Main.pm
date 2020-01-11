@@ -64,30 +64,37 @@ my $Platforms = {
     set => sub {
       my $json = $_[0];
       $json->{version} = 2;
-      $json->{jobs}->{build}->{machine}->{enabled} = \1;
-      $json->{jobs}->{build}->{environment}->{CIRCLE_ARTIFACTS} = '/tmp/circle-artifacts';
-      $json->{jobs}->{build}->{steps} = ['checkout', circle_step ('mkdir -p $CIRCLE_ARTIFACTS')];
-      for ('_build', '_test') {
-        my $build = delete $json->{$_};
-        if (defined $build) {
-          push @{$json->{jobs}->{build}->{steps}}, map {
-            circle_step ($_);
-          } @$build;
+      $json->{workflows} = {version => 2};
+      $json->{jobs} ||= {};
+      if (delete $json->{_empty}) {
+        for (qw(_build _test _deploy)) {
+          die "Both |empty| and non-empty rules are specified"
+              if defined $json->{$_};
         }
-      }
-      push @{$json->{jobs}->{build}->{steps}}, {store_artifacts => {
-        path => '/tmp/circle-artifacts',
-      }};
-      for my $branch (sort { $a cmp $b } keys %{$json->{_deploy} or {}}) {
-        push @{$json->{jobs}->{build}->{steps}}, map {
-          circle_step ($_, deploy => 1, branch => $branch);
-        } @{$json->{_deploy}->{$branch}};
-      }
-      delete $json->{_deploy};
+      } else {
+        $json->{jobs}->{build}->{machine}->{enabled} = \1;
+        $json->{jobs}->{build}->{environment}->{CIRCLE_ARTIFACTS} = '/tmp/circle-artifacts';
+        $json->{jobs}->{build}->{steps} = ['checkout', circle_step ('mkdir -p $CIRCLE_ARTIFACTS')];
+        for ('_build', '_test') {
+          my $build = delete $json->{$_};
+          if (defined $build) {
+            push @{$json->{jobs}->{build}->{steps}}, map {
+              circle_step ($_);
+            } @$build;
+          }
+        }
+        push @{$json->{jobs}->{build}->{steps}}, {store_artifacts => {
+          path => '/tmp/circle-artifacts',
+        }};
+        for my $branch (sort { $a cmp $b } keys %{$json->{_deploy} or {}}) {
+          push @{$json->{jobs}->{build}->{steps}}, map {
+            circle_step ($_, deploy => 1, branch => $branch);
+          } @{$json->{_deploy}->{$branch}};
+        }
+        delete $json->{_deploy};
 
-      $json->{workflows} = {version => 2, build => {
-        jobs => ['build'],
-      }};
+        $json->{workflows}->{build}->{jobs} = ['build'];
+      }
     },
   },
   circleci1 => { # obsolete
@@ -298,6 +305,12 @@ $Options->{'circleci', 'parallel'} = {
   },
 };
 
+$Options->{'circleci', 'empty'} = {
+  set => sub {
+    $_[0]->{_empty} = 1;
+  },
+};
+
 $Options->{'circleci', 'gaa'} = {
   set => sub {
     # XXX
@@ -338,7 +351,7 @@ sub generate ($$$) {
 
 =head1 LICENSE
 
-Copyright 2018 Wakaba <wakaba@suikawiki.org>.
+Copyright 2018-2020 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

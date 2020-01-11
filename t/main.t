@@ -469,6 +469,13 @@ for (
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
+  [{circleci => {
+    empty => 1,
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {},
+    workflows => {version => 2},
+  }}}],
 ) {
   my ($input, $expected) = @$_;
   for (qw(.travis.yml circle.yml .circleci/config.yml)) {
@@ -489,7 +496,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2018 Wakaba <wakaba@suikawiki.org>.
+Copyright 2018-2020 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
