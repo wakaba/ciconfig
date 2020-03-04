@@ -56,7 +56,7 @@ my $Platforms = {
   travisci => {
     file => '.travis.yml',
     set => sub {
-      unshift @{$_[0]->{jobs}->{include} ||= []}, {stage => 'test'};
+      #unshift @{$_[0]->{jobs}->{include} ||= []}, {stage => 'test'};
     },
   },
   circleci => {
