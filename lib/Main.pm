@@ -143,6 +143,7 @@ $Options->{'travisci', 'merger'} = {
     die "File |$path| not found" unless $path->is_file;
     $_[0]->{env}->{global}->{secure} = $path->slurp;
     push @{$_[0]->{jobs}->{include} ||= []},
+        {stage => 'test'},
         {stage => 'merge',
          before_install => "true",
          install => "true",

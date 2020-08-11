@@ -69,6 +69,7 @@ for (
   [{travisci => {merger => 1}} => {'.travis.yml' => {json => {
     env => {global => {secure => "ab xxx 314444\n"}},
     jobs => {include => [
+      {stage => 'test'},
       {stage => 'merge',
        before_install => "true",
        install => "true",
