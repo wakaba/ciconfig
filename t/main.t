@@ -15,7 +15,7 @@ for (
   [{travisci => {pmbp => 'latest'}} => {'.travis.yml' => {json => {
     git => {submodules => \0},
     language => 'perl',
-    perl => ['5.26'],
+    perl => ['5.32'],
     before_install => 'true',
     install => 'make test-deps',
     script => 'make test',
@@ -23,7 +23,7 @@ for (
   [{travisci => {pmbp => '5.8+'}} => {'.travis.yml' => {json => {
     git => {submodules => \0},
     language => 'perl',
-    perl => ['5.26', '5.14', '5.8'],
+    perl => ['5.32', '5.14', '5.8'],
     before_install => 'true',
     install => 'make test-deps',
     script => 'make test',
@@ -31,7 +31,7 @@ for (
   [{travisci => {pmbp => '5.10+'}} => {'.travis.yml' => {json => {
     git => {submodules => \0},
     language => 'perl',
-    perl => ['5.26', '5.14', '5.10'],
+    perl => ['5.32', '5.14', '5.10'],
     before_install => 'true',
     install => 'make test-deps',
     script => 'make test',
@@ -39,7 +39,7 @@ for (
   [{travisci => {pmbp => '5.12+'}} => {'.travis.yml' => {json => {
     git => {submodules => \0},
     language => 'perl',
-    perl => ['5.26', '5.14', '5.12'],
+    perl => ['5.32', '5.14', '5.12'],
     before_install => 'true',
     install => 'make test-deps',
     script => 'make test',
@@ -47,7 +47,7 @@ for (
   [{travisci => {pmbp => '5.14+'}} => {'.travis.yml' => {json => {
     git => {submodules => \0},
     language => 'perl',
-    perl => ['5.26', '5.14'],
+    perl => ['5.32', '5.14'],
     before_install => 'true',
     install => 'make test-deps',
     script => 'make test',
@@ -55,7 +55,7 @@ for (
   [{travisci => {pmbp => 1}} => {'.travis.yml' => {json => {
     git => {submodules => \0},
     language => 'perl',
-    perl => ['5.26', '5.14', '5.8'],
+    perl => ['5.32', '5.14', '5.8'],
     before_install => 'true',
     install => 'make test-deps',
     script => 'make test',
