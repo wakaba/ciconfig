@@ -172,12 +172,13 @@ $Options->{'circleci', 'heroku'} = {
         'git config --global user.email "temp@circleci.test"',
         'git config --global user.name "CircleCI"';
 
+    my $def = ref $_[1] eq 'HASH' ? $_[1] : {};
     push @{$_[0]->{_deploy}->{'master'} ||= []},
         'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
-        @{(ref $_[1] eq 'HASH' && ref $_[1]->{prepare} eq 'ARRAY') ? $_[1]->{prepare} : []},
+        @{ref $def->{prepare} eq 'ARRAY' ? $def->{prepare} : []},
         'make create-commit-for-heroku',
-        'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master',
-        @{(ref $_[1] eq 'HASH' && ref $_[1]->{pushed} eq 'ARRAY') ? $_[1]->{pushed} : []},
+        'git push git@heroku.com:'.($def->{app_name} || '$HEROKU_APP_NAME').'.git +`git rev-parse HEAD`:refs/heads/master',
+        @{ref $def->{pushed} eq 'ARRAY' ? $def->{pushed} : []},
     ;
   },
 };
