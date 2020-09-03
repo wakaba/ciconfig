@@ -111,19 +111,21 @@ my $Platforms = {
         # $stores
 
         $json->{jobs}->{build}->{machine}->{enabled} = \1;
-        $json->{jobs}->{build}->{environment}->{CIRCLE_ARTIFACTS} = '/tmp/circle-artifacts';
+        $json->{jobs}->{build}->{environment}->{CIRCLE_ARTIFACTS} = '/tmp/circle-artifacts/build';
         $json->{jobs}->{build}->{steps} = ['checkout', circle_step ('mkdir -p $CIRCLE_ARTIFACTS')];
-        for ('_build', '_test') {
-          my $build = delete $json->{$_};
-          if (defined $build) {
-            push @{$json->{jobs}->{build}->{steps}}, map {
-              circle_step ($_);
-            } @$build;
-          }
+        if (defined $json->{_build}) {
+          push @{$json->{jobs}->{build}->{steps}}, map {
+            circle_step ($_);
+          } @{delete $json->{_build}};
+        }
+        if (defined $json->{_test}) {
+          push @{$json->{jobs}->{build}->{steps}}, map {
+            circle_step ($_);
+          } @{delete $json->{_test}};
         }
         push @{$json->{jobs}->{build}->{steps}},
             {store_artifacts => {
-              path => '/tmp/circle-artifacts',
+              path => '/tmp/circle-artifacts/build',
             }};
         push @{$json->{jobs}->{build}->{steps}}, @$stores;
         for my $branch (sort { $a cmp $b } keys %{$json->{_deploy} or {}}) {
@@ -399,9 +401,6 @@ $Options->{'circleci', 'gaa'} = {
   set => sub {
     my $json = $_[0];
     $json->{jobs}->{gaa4} = {
-      "environment" => {
-        "CIRCLE_ARTIFACTS" => "/tmp/circle-artifacts",
-      },
       "machine" => {
         "enabled" => \1,
       },

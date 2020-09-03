@@ -81,11 +81,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -94,13 +94,13 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'docker info'}},
         {run => {command => 'docker build -t abc/def .'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} ."\x0Atrue\x0A" . 'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS || docker login -u $DOCKER_USER -p $DOCKER_PASS' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} ."\x0Atrue\x0A" . 'docker push abc/def && curl -sSLf $BWALL_URL -X POST' . "\x0Afi"}},
       ],
@@ -111,13 +111,13 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'docker info'}},
         {run => {command => 'docker build -t xyz/abc/def .'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} ."\x0Atrue\x0A" . 'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS xyz || docker login -u $DOCKER_USER -p $DOCKER_PASS xyz' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} ."\x0Atrue\x0A" . 'docker push xyz/abc/def && curl -sSLf $BWALL_URL -X POST' . "\x0Afi"}},
       ],
@@ -131,13 +131,13 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'docker info'}},
         {run => {command => 'docker build -t xyz/abc/def .'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {"persist_to_workspace" => {
           "root" => "./",
           "paths" => [],
@@ -170,14 +170,14 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'docker info'}},
         {run => {command => 'docker pull a/b && docker pull a/b/c',
                  background => \1}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -186,7 +186,7 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
@@ -194,7 +194,7 @@ for (
       'git config --global user.email "temp@circleci.test"' . "\x0A" .
       'git config --global user.name "CircleCI"'
         }},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
@@ -208,7 +208,7 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
@@ -216,7 +216,7 @@ for (
       'git config --global user.email "temp@circleci.test"' . "\x0A" .
       'git config --global user.name "CircleCI"'
         }},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'git push git@heroku.com:abcdef.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
@@ -230,7 +230,7 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
@@ -238,7 +238,7 @@ for (
       'git config --global user.email "temp@circleci.test"' . "\x0A" .
       'git config --global user.name "CircleCI"'
         }},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'abc' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . './foo bar' . "\x0Afi"}},
@@ -254,7 +254,7 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
@@ -262,7 +262,7 @@ for (
       'git config --global user.email "temp@circleci.test"' . "\x0A" .
       'git config --global user.name "CircleCI"'
         }},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'make create-commit-for-heroku' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master' . "\x0Afi"}},
@@ -279,11 +279,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {"persist_to_workspace" => {
           "root" => "./",
           "paths" => [],
@@ -316,11 +316,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {"persist_to_workspace" => {
           "root" => "./",
           "paths" => ['foo', 'bar'],
@@ -354,11 +354,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {"persist_to_workspace" => {
           "root" => "./",
           "paths" => ['foo', 'bar',
@@ -389,11 +389,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'true' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'false' . "\x0Afi"}},
       ],
@@ -407,11 +407,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'oge"\\'\\\\x-' ]; then} . "\x0Atrue\x0A" . 'true' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'oge"\\'\\\\x-' ]; then} . "\x0Atrue\x0A" . 'false' . "\x0Afi"}},
       ],
@@ -424,11 +424,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'master' ]; then} . "\x0Atrue\x0A" . 'make deploy-master' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'staging' ]; then} . "\x0Atrue\x0A" . 'make deploy-staging' . "\x0Afi"}},
       ],
@@ -439,11 +439,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }, deploy_staging => {
       machine => {enabled => \1},
@@ -472,11 +472,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }, deploy_staging => {
       machine => {enabled => \1},
@@ -505,14 +505,14 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => "(((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev) || (sudo apt-get update && sudo apt-get install -y python-dev)\n".
                  "sudo pip install awscli --upgrade\n".
                  "aws --version"}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -522,11 +522,11 @@ for (
     jobs => {build => {
       parallelism => 2,
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -536,11 +536,11 @@ for (
     jobs => {build => {
       parallelism => 2,
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -550,11 +550,11 @@ for (
     jobs => {build => {
       parallelism => 4,
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -563,11 +563,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -576,11 +576,11 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -592,13 +592,13 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'a'}},
         {run => {command => q{if [ "${CIRCLE_BRANCH}" == 'c' ]; then} . "\x0Atrue\x0A" . 'b' . "\x0Afi"}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -610,13 +610,13 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'a'}},
         {run => {command => q{if [ "${CIRCLE_NODE_INDEX}" == "0" ]; then} . "\x0A" . "true\x0A" . 'b' . "\x0Afi"}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -627,12 +627,12 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'a' . "\n" . 'b'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
@@ -646,12 +646,12 @@ for (
     version => 2,
     jobs => {build => {
       machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'a' . "\n" . 'b'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'b1' ]; then} . "\x0Atrue\x0A" . 'c' . "\x0Afi"}},
         {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'b2' ]; then} . "\x0Atrue\x0A" . 'd' . "\x0Afi"}},
       ],
@@ -673,7 +673,6 @@ for (
     jobs => {
       gaa4 => {
         machine => {enabled => \1},
-        environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
         steps => [
           "checkout",
           {run => {command => 'git config --global user.email "temp@circleci.test";git config --global user.name "CircleCI"'}},
@@ -707,7 +706,6 @@ for (
     jobs => {
       gaa4 => {
         machine => {enabled => \1},
-        environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
         steps => [
           "checkout",
           {run => {command => 'git config --global user.email "temp@circleci.test";git config --global user.name "CircleCI"'}},
@@ -719,11 +717,11 @@ for (
       },
       build => {
         machine => {enabled => \1},
-        environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+        environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
         steps => [
           'checkout',
           {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-          {store_artifacts => {path => '/tmp/circle-artifacts'}},
+          {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         ],
       },
     },
