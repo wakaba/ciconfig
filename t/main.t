@@ -267,13 +267,29 @@ for (
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'nightly' ]; then} . "\x0Atrue\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
-          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'staging' ]; then} . "\x0Atrue\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
-          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
+      ],
+    }, deploy_staging => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {deploy => {command => 'git rev-parse HEAD > head.txt' . "\x0A" .
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"'}},
+      ],
+    }, deploy_nightly => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {deploy => {command => 'git rev-parse HEAD > head.txt' . "\x0A" .
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"'}},
       ],
     }},
-    workflows => {version => 2, build => {jobs => ['build']}},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {'deploy_nightly' => {filters => {branches => {only => ['nightly']}},
+                            requires => ['build']}},
+      {'deploy_staging' => {filters => {branches => {only => ['staging']}},
+                            requires => ['build']}},
+    ]}},
   }}}],
   [{circleci => {merger => {into => 'dev'}}} => {'.circleci/config.yml' => {json => {
     version => 2,
@@ -284,13 +300,29 @@ for (
         'checkout',
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {store_artifacts => {path => '/tmp/circle-artifacts'}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'nightly' ]; then} . "\x0Atrue\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
-          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
-        {deploy => {command => q{if [ "${CIRCLE_BRANCH}" == 'staging' ]; then} . "\x0Atrue\x0A" . 'git rev-parse HEAD > head.txt' . "\x0A" .
-          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"' . "\x0Afi"}},
+      ],
+    }, deploy_staging => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {deploy => {command => 'git rev-parse HEAD > head.txt' . "\x0A" .
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"'}},
+      ],
+    }, deploy_nightly => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {deploy => {command => 'git rev-parse HEAD > head.txt' . "\x0A" .
+          'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"'}},
       ],
     }},
-    workflows => {version => 2, build => {jobs => ['build']}},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {'deploy_nightly' => {filters => {branches => {only => ['nightly']}},
+                            requires => ['build']}},
+      {'deploy_staging' => {filters => {branches => {only => ['staging']}},
+                            requires => ['build']}},
+    ]}},
   }}}],
   [{circleci => {awscli => 1}} => {'.circleci/config.yml' => {json => {
     version => 2,
@@ -548,6 +580,8 @@ for (
     #use Test::Differences;
     #eq_or_diff $output, $expected;
     is_deeply $output, $expected;
+    #use Data::Dumper;
+    #warn Dumper $output;
     done $c;
   } n => 1;
 }

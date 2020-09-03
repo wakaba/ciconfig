@@ -94,6 +94,20 @@ my $Platforms = {
         delete $json->{_deploy};
 
         $json->{workflows}->{build}->{jobs} = ['build'];
+
+        ## Deploy steps executed after build job
+        for my $branch_name (sort { $a cmp $b } keys %{$json->{_deploy_jobs} or {}}) {
+          my $job_name = 'deploy_' . $branch_name;
+          $json->{jobs}->{$job_name}->{machine}->{enabled} = \1;
+          push @{$json->{jobs}->{$job_name}->{steps}}, 'checkout', map {
+            circle_step ($_, deploy => 1);
+          } @{$json->{_deploy_jobs}->{$branch_name}};
+          push @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
+            requires => ['build'],
+            filters => {branches => {only => [$branch_name]}},
+          }};
+        }
+        delete $json->{_deploy_jobs};
       }
     },
   },
@@ -267,13 +281,14 @@ $Options->{'circleci', 'deploy_branch'} = {
 
 $Options->{'circleci', 'merger'} = {
   set => sub {
+    my $json = $_[0];
     return unless $_[1];
     my $into = 'master';
     if (ref $_[1] eq 'HASH') {
       $into = $_[1]->{into} if defined $_[1]->{into};
     }
     for my $branch (qw(staging nightly)) {
-      push @{$_[0]->{_deploy}->{$branch} ||= []}, join "\n",
+      push @{$json->{_deploy_jobs}->{$branch} ||= []}, join "\n",
           'git rev-parse HEAD > head.txt',
           'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\"base\":\"'.$into.'\",\"head\":\"`cat head.txt`\",\"commit_message\":\"auto-merge $CIRCLE_BRANCH into '.$into.'\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"';
     } # $branch
