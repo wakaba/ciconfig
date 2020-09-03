@@ -149,6 +149,17 @@ for (
           "paths" => ['dockerimages'],
         }},
       ],
+    }, test => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {"attach_workspace" => {"at" => "/tmp/dockerimages"}},
+        {run => {command => 'docker load -i /tmp/dockerimages/xyz/abc/def.tar'}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
+      ],
     }, deploy_master => {
       machine => {enabled => \1},
       steps => [
@@ -162,10 +173,72 @@ for (
     }},
     workflows => {version => 2, build => {jobs => [
       'build',
+      {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build']}},
+                           requires => ['test']}},
     ]}},
-  }}}],
+  }}}, 'build jobs / docker'],
+  [{circleci => {
+    'docker-build' => 'xyz/abc/def',
+    build_generated_files => [],
+    pmbp => 1,
+    build => ["echo 2"],
+    tests => ["echo 1"],
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'echo 2'}},
+        {run => {command => 'docker info'}},
+        {run => {command => 'docker build -t xyz/abc/def .'}},
+        {run => {command => 'make test-deps'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => [],
+        }},
+        {run => {command => 'mkdir -p /tmp/dockerimages/xyz/abc/'}},
+        {run => {command => 'docker save -o /tmp/dockerimages/xyz/abc/def.tar xyz/abc/def'}},
+        {"persist_to_workspace" => {
+          "root" => "/tmp",
+          "paths" => ['dockerimages'],
+        }},
+      ],
+    }, test => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {"attach_workspace" => {"at" => "/tmp/dockerimages"}},
+        {run => {command => 'docker load -i /tmp/dockerimages/xyz/abc/def.tar'}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'make test'}},
+        {run => {command => 'echo 1'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
+      ],
+    }, deploy_master => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {"attach_workspace" => {"at" => "/tmp/dockerimages"}},
+        {run => {command => 'docker load -i /tmp/dockerimages/xyz/abc/def.tar'}},
+        {deploy => {command => 'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS xyz || docker login -u $DOCKER_USER -p $DOCKER_PASS xyz'}},
+        {deploy => {command => 'docker push xyz/abc/def && curl -sSLf $BWALL_URL -X POST'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {test => {requires => ['build']}},
+      {'deploy_master' => {filters => {branches => {only => ['master']}},
+                           requires => ['test']}},
+    ]}},
+  }}}, 'build jobs / docker with tests'],
   [{circleci => {required_docker_images => ['a/b', 'a/b/c']}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
@@ -289,6 +362,15 @@ for (
           "paths" => [],
         }},
       ],
+    }, test => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
+      ],
     }, deploy_master => {
       machine => {enabled => \1},
       steps => [
@@ -305,10 +387,11 @@ for (
     }},
     workflows => {version => 2, build => {jobs => [
       'build',
+      {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build']}},
+                           requires => ['test']}},
     ]}},
-  }}}],
+  }}}, 'empty build_generated_files'],
   [{circleci => {
     heroku => 1,
     build_generated_files => ['foo', 'bar'],
@@ -326,6 +409,15 @@ for (
           "paths" => ['foo', 'bar'],
         }},
       ],
+    }, test => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
+      ],
     }, deploy_master => {
       machine => {enabled => \1},
       steps => [
@@ -342,8 +434,9 @@ for (
     }},
     workflows => {version => 2, build => {jobs => [
       'build',
+      {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build']}},
+                           requires => ['test']}},
     ]}},
   }}}],
   [{circleci => {
@@ -365,6 +458,15 @@ for (
                       qw(deps local perl prove plackup lserver local-server rev)],
         }},
       ],
+    }, test => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
+      ],
     }, deploy_master => {
       machine => {enabled => \1},
       steps => [
@@ -381,8 +483,9 @@ for (
     }},
     workflows => {version => 2, build => {jobs => [
       'build',
+      {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build']}},
+                           requires => ['test']}},
     ]}},
   }}}],
   [{circleci => {deploy => ['true', 'false']}} => {'.circleci/config.yml' => {json => {
@@ -744,7 +847,7 @@ for (
     }, build => {jobs => ['build']}},
   }}}],
 ) {
-  my ($input, $expected) = @$_;
+  my ($input, $expected, $name) = @$_;
   for (qw(.travis.yml circle.yml .circleci/config.yml)) {
     $expected->{$_} ||= {remove => 1};
   }
@@ -758,7 +861,7 @@ for (
     #use Data::Dumper;
     #warn Dumper $output;
     done $c;
-  } n => 1;
+  } n => 1, name => $name;
 }
 
 run_tests;
