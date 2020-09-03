@@ -2,7 +2,7 @@
    "jobs" : {
       "build" : {
          "environment" : {
-            "CIRCLE_ARTIFACTS" : "/tmp/circle-artifacts"
+            "CIRCLE_ARTIFACTS" : "/tmp/circle-artifacts/build"
          },
          "machine" : {
             "enabled" : true
@@ -26,7 +26,7 @@
             },
             {
                "store_artifacts" : {
-                  "path" : "/tmp/circle-artifacts"
+                  "path" : "/tmp/circle-artifacts/build"
                }
             }
          ]
