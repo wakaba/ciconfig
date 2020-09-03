@@ -93,6 +93,21 @@ my $Platforms = {
               "paths" => $json->{_build_generated_files},
             }}
             if defined $json->{_build_generated_files};
+        if (@{$json->{_build_generated_images} or []}) {
+          for my $name (@{$json->{_build_generated_images} or []}) {
+            my $dir = $name;
+            $dir =~ s{[^/]+$}{};
+            push @{$json->{jobs}->{build}->{steps}},
+                {run => {command => 'mkdir -p /tmp/dockerimages/'.$dir}};
+            push @{$json->{jobs}->{build}->{steps}},
+                {"run" => {"command" => "docker save -o /tmp/dockerimages/$name.tar $name"}};
+          }
+          push @{$json->{jobs}->{build}->{steps}},
+              {"persist_to_workspace" => {
+                "root" => "/tmp",
+                "paths" => ['dockerimages'],
+              }};
+        }
         for my $branch (sort { $a cmp $b } keys %{$json->{_deploy} or {}}) {
           push @{$json->{jobs}->{build}->{steps}}, map {
             circle_step ($_, deploy => 1, branch => $branch);
@@ -111,6 +126,14 @@ my $Platforms = {
           push @{$json->{jobs}->{$job_name}->{steps}},
               {"attach_workspace" => {"at" => "./"}}
               if defined $json->{_build_generated_files};
+          if (@{$json->{_build_generated_images} or []}) {
+            push @{$json->{jobs}->{$job_name}->{steps}},
+                {"attach_workspace" => {"at" => "/tmp/dockerimages"}};
+            for my $name (@{$json->{_build_generated_images} or []}) {
+              push @{$json->{jobs}->{$job_name}->{steps}},
+                  {"run" => {"command" => "docker load -i /tmp/dockerimages/$name.tar"}};
+            }
+          }
           push @{$json->{jobs}->{$job_name}->{steps}},
               map {
                 circle_step ($_, deploy => 1);
@@ -123,6 +146,7 @@ my $Platforms = {
         delete $json->{_deploy_jobs};
 
         delete $json->{_build_generated_files};
+        delete $json->{_build_generated_images};
       }
     },
   },
@@ -243,28 +267,33 @@ $Options->{'circleci', 'docker-build'} = {
     return unless $_[1];
     my $defs = ref $_[1] eq 'ARRAY' ? $_[1] : [$_[1]];
     push @{$_[0]->{_build} ||= []}, 'docker info';
+    my $has_bg = !! $_[0]->{_build_generated_files};
     my $has_login = {};
     for my $def (@$defs) {
       $def = ref $def ? $def : {name => $def};
       die "No |name|" unless defined $def->{name};
       $def->{path} = '.' unless defined $def->{path};
       $def->{branch} = 'master' unless defined $def->{branch};
+      if ($has_bg) {
+        push @{$_[0]->{_build_generated_images} ||= []}, $def->{name};
+      }
       push @{$_[0]->{_build} ||= []},
           'docker build -t ' . $def->{name} . ' ' . $def->{path};
       if ($def->{name} =~ m{^([^/]+)/([^/]+)/([^/]+)$}) {
         if (not $has_login->{$1}) {
-          push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
+          push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$def->{branch}} ||= []},
               'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS '.$1.' || docker login -u $DOCKER_USER -p $DOCKER_PASS '.$1;
           $has_login->{$1} = 1;
         }
       } else {
         if (not $has_login->{''}) {
-          push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
+          push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$def->{branch}} ||= []},
               'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS || docker login -u $DOCKER_USER -p $DOCKER_PASS';
           $has_login->{''} = 1;
         }
       }
-      push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
+
+      push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$def->{branch}} ||= []},
           'docker push ' . $def->{name} . ' && ' .
           'curl -sSLf $BWALL_URL'.(defined $def->{bwall_suffix} ? '.' . $def->{bwall_suffix} : $def->{branch} eq 'master' ? '' : '.' . $def->{branch}).' -X POST';
     } # $def
