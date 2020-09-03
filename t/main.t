@@ -124,6 +124,48 @@ for (
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
+  [{circleci => {
+    'docker-build' => 'xyz/abc/def',
+    build_generated_files => [],
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'docker info'}},
+        {run => {command => 'docker build -t xyz/abc/def .'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => [],
+        }},
+        {run => {command => 'mkdir -p /tmp/dockerimages/xyz/abc/'}},
+        {run => {command => 'docker save -o /tmp/dockerimages/xyz/abc/def.tar xyz/abc/def'}},
+        {"persist_to_workspace" => {
+          "root" => "/tmp",
+          "paths" => ['dockerimages'],
+        }},
+      ],
+    }, deploy_master => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {"attach_workspace" => {"at" => "/tmp/dockerimages"}},
+        {run => {command => 'docker load -i /tmp/dockerimages/xyz/abc/def.tar'}},
+        {deploy => {command => 'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS xyz || docker login -u $DOCKER_USER -p $DOCKER_PASS xyz'}},
+        {deploy => {command => 'docker push xyz/abc/def && curl -sSLf $BWALL_URL -X POST'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {'deploy_master' => {filters => {branches => {only => ['master']}},
+                           requires => ['build']}},
+    ]}},
+  }}}],
   [{circleci => {required_docker_images => ['a/b', 'a/b/c']}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
