@@ -72,6 +72,44 @@ my $Platforms = {
               if defined $json->{$_};
         }
       } else {
+
+        my $loads = [];
+        push @$loads, 'checkout';
+        push @$loads, {"attach_workspace" => {"at" => "./"}}
+            if defined $json->{_build_generated_files};
+        if (@{$json->{_build_generated_images} or []}) {
+          push @$loads,
+              {"attach_workspace" => {"at" => "/tmp/dockerimages"}};
+          for my $name (@{$json->{_build_generated_images} or []}) {
+            push @$loads,
+                {"run" => {"command" => "docker load -i /tmp/dockerimages/$name.tar"}};
+          }
+        }
+        # $loads
+        my $stores = [];
+        push @$stores,
+            {"persist_to_workspace" => {
+              "root" => "./",
+              "paths" => $json->{_build_generated_files},
+            }}
+            if defined $json->{_build_generated_files};
+        if (@{$json->{_build_generated_images} or []}) {
+          for my $name (@{$json->{_build_generated_images} or []}) {
+            my $dir = $name;
+            $dir =~ s{[^/]+$}{};
+            push @$stores,
+                {run => {command => 'mkdir -p /tmp/dockerimages/'.$dir}};
+            push @$stores,
+                {"run" => {"command" => "docker save -o /tmp/dockerimages/$name.tar $name"}};
+          }
+          push @$stores,
+              {"persist_to_workspace" => {
+                "root" => "/tmp",
+                "paths" => ['dockerimages'],
+              }};
+        }
+        # $stores
+
         $json->{jobs}->{build}->{machine}->{enabled} = \1;
         $json->{jobs}->{build}->{environment}->{CIRCLE_ARTIFACTS} = '/tmp/circle-artifacts';
         $json->{jobs}->{build}->{steps} = ['checkout', circle_step ('mkdir -p $CIRCLE_ARTIFACTS')];
@@ -87,27 +125,7 @@ my $Platforms = {
             {store_artifacts => {
               path => '/tmp/circle-artifacts',
             }};
-        push @{$json->{jobs}->{build}->{steps}},
-            {"persist_to_workspace" => {
-              "root" => "./",
-              "paths" => $json->{_build_generated_files},
-            }}
-            if defined $json->{_build_generated_files};
-        if (@{$json->{_build_generated_images} or []}) {
-          for my $name (@{$json->{_build_generated_images} or []}) {
-            my $dir = $name;
-            $dir =~ s{[^/]+$}{};
-            push @{$json->{jobs}->{build}->{steps}},
-                {run => {command => 'mkdir -p /tmp/dockerimages/'.$dir}};
-            push @{$json->{jobs}->{build}->{steps}},
-                {"run" => {"command" => "docker save -o /tmp/dockerimages/$name.tar $name"}};
-          }
-          push @{$json->{jobs}->{build}->{steps}},
-              {"persist_to_workspace" => {
-                "root" => "/tmp",
-                "paths" => ['dockerimages'],
-              }};
-        }
+        push @{$json->{jobs}->{build}->{steps}}, @$stores;
         for my $branch (sort { $a cmp $b } keys %{$json->{_deploy} or {}}) {
           push @{$json->{jobs}->{build}->{steps}}, map {
             circle_step ($_, deploy => 1, branch => $branch);
@@ -121,19 +139,7 @@ my $Platforms = {
         for my $branch_name (sort { $a cmp $b } keys %{$json->{_deploy_jobs} or {}}) {
           my $job_name = 'deploy_' . $branch_name;
           $json->{jobs}->{$job_name}->{machine}->{enabled} = \1;
-          push @{$json->{jobs}->{$job_name}->{steps}},
-              'checkout';
-          push @{$json->{jobs}->{$job_name}->{steps}},
-              {"attach_workspace" => {"at" => "./"}}
-              if defined $json->{_build_generated_files};
-          if (@{$json->{_build_generated_images} or []}) {
-            push @{$json->{jobs}->{$job_name}->{steps}},
-                {"attach_workspace" => {"at" => "/tmp/dockerimages"}};
-            for my $name (@{$json->{_build_generated_images} or []}) {
-              push @{$json->{jobs}->{$job_name}->{steps}},
-                  {"run" => {"command" => "docker load -i /tmp/dockerimages/$name.tar"}};
-            }
-          }
+          push @{$json->{jobs}->{$job_name}->{steps}}, @$loads;
           push @{$json->{jobs}->{$job_name}->{steps}},
               map {
                 circle_step ($_, deploy => 1);
