@@ -154,6 +154,9 @@ my $Platforms = {
           push @{$json->{workflows}->{build}->{jobs}},
               {'test' => {requires => ['build']}};
         }
+        if  ($json->{_parallel}) {
+          $json->{jobs}->{$job_name[-1]}->{parallelism} = delete $json->{_parallel};
+        }
 
         ## Deploy steps executed after build job
         for my $branch_name (sort { $a cmp $b } keys %{$json->{_deploy_jobs} or {}}) {
@@ -405,7 +408,7 @@ $Options->{'circleci', 'parallel'} = {
       $value = 0+$_[1];
       $value = 2 if $value < 2;
     }
-    $_[0]->{jobs}->{build}->{parallelism} = $value;
+    $_[0]->{_parallel} = $value;
   },
 };
 

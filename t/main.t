@@ -661,7 +661,40 @@ for (
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
-  }}}],
+  }}}, 'parallel 4'],
+  [{circleci => {
+    build_generated_files => [],
+    parallel => 4,
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => [],
+        }},
+      ],
+    }, test => {
+      parallelism => 4,
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {test => {requires => ['build']}},
+    ]}},
+  }}}, 'parallel 4 build and test'],
   [{circleci => {parallel => 0}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
