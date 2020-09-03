@@ -67,7 +67,7 @@ my $Platforms = {
       $json->{workflows}->{version} = 2;
       $json->{jobs} ||= {};
       if (delete $json->{_empty}) {
-        for (qw(_build _test _deploy)) {
+        for (qw(_build _test _deploy _deploy_jobs)) {
           die "Both |empty| and non-empty rules are specified"
               if defined $json->{$_};
         }
@@ -83,9 +83,16 @@ my $Platforms = {
             } @$build;
           }
         }
-        push @{$json->{jobs}->{build}->{steps}}, {store_artifacts => {
-          path => '/tmp/circle-artifacts',
-        }};
+        push @{$json->{jobs}->{build}->{steps}},
+            {store_artifacts => {
+              path => '/tmp/circle-artifacts',
+            }};
+        push @{$json->{jobs}->{build}->{steps}},
+            {"persist_to_workspace" => {
+              "root" => "./",
+              "paths" => $json->{_build_generated_files},
+            }}
+            if defined $json->{_build_generated_files};
         for my $branch (sort { $a cmp $b } keys %{$json->{_deploy} or {}}) {
           push @{$json->{jobs}->{build}->{steps}}, map {
             circle_step ($_, deploy => 1, branch => $branch);
@@ -99,15 +106,23 @@ my $Platforms = {
         for my $branch_name (sort { $a cmp $b } keys %{$json->{_deploy_jobs} or {}}) {
           my $job_name = 'deploy_' . $branch_name;
           $json->{jobs}->{$job_name}->{machine}->{enabled} = \1;
-          push @{$json->{jobs}->{$job_name}->{steps}}, 'checkout', map {
-            circle_step ($_, deploy => 1);
-          } @{$json->{_deploy_jobs}->{$branch_name}};
+          push @{$json->{jobs}->{$job_name}->{steps}},
+              'checkout';
+          push @{$json->{jobs}->{$job_name}->{steps}},
+              {"attach_workspace" => {"at" => "./"}}
+              if defined $json->{_build_generated_files};
+          push @{$json->{jobs}->{$job_name}->{steps}},
+              map {
+                circle_step ($_, deploy => 1);
+              } @{$json->{_deploy_jobs}->{$branch_name}};
           push @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
             requires => ['build'],
             filters => {branches => {only => [$branch_name]}},
           }};
         }
         delete $json->{_deploy_jobs};
+
+        delete $json->{_build_generated_files};
       }
     },
   },
@@ -168,12 +183,14 @@ $Options->{'travisci', 'merger'} = {
 $Options->{'circleci', 'heroku'} = {
   set => sub {
     return unless $_[1];
-    push @{$_[0]->{_build} ||= []}, join "\n",
+    my $has_bg = !! $_[0]->{_build_generated_files};
+    
+    push @{$has_bg ? $_[0]->{_deploy_jobs}->{master} ||= [] : $_[0]->{_build} ||= []}, join "\n",
         'git config --global user.email "temp@circleci.test"',
         'git config --global user.name "CircleCI"';
-
+    
     my $def = ref $_[1] eq 'HASH' ? $_[1] : {};
-    push @{$_[0]->{_deploy}->{'master'} ||= []},
+    push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{'master'} ||= []},
         'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
         @{ref $def->{prepare} eq 'ARRAY' ? $def->{prepare} : []},
         'make create-commit-for-heroku',
@@ -188,6 +205,21 @@ $Options->{'circleci', 'pmbp'} = {
     return unless $_[1];
     push @{$_[0]->{_build} ||= []}, 'make test-deps';
     push @{$_[0]->{_test} ||= []}, 'make test';
+  },
+};
+
+$Options->{'circleci', 'build_generated_files'} = {
+  set => sub {
+    return unless $_[1] and ref $_[1] eq 'ARRAY';
+    push @{$_[0]->{_build_generated_files} ||= []}, @{$_[1]};
+  },
+};
+
+$Options->{'circleci', 'build_generated_pmbp'} = {
+  set => sub {
+    return unless $_[1];
+    push @{$_[0]->{_build_generated_files} ||= []},
+        qw(deps local perl prove plackup lserver local-server rev);
   },
 };
 
