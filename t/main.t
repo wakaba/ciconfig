@@ -127,6 +127,7 @@ for (
   [{circleci => {
     'docker-build' => 'xyz/abc/def',
     build_generated_files => [],
+    tests => ['test1'],
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
@@ -153,6 +154,7 @@ for (
         {"attach_workspace" => {"at" => "./"}},
         {run => {command => 'docker load -i .ciconfigtemp/dockerimages/xyz/abc/def.tar'}},
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test1'}},
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
     }, deploy_master => {
@@ -169,7 +171,7 @@ for (
       'build',
       {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['test']}},
+                           requires => ['build', 'test']}},
     ]}},
   }}}, 'build jobs / docker'],
   [{circleci => {
@@ -206,9 +208,19 @@ for (
         {"attach_workspace" => {"at" => "./"}},
         {run => {command => 'docker load -i .ciconfigtemp/dockerimages/xyz/abc/def.tar'}},
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {run => {command => 'make test'}},
         {run => {command => 'echo 1'}},
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
+      ],
+    }, 'test-pmbp' => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-pmbp'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'docker load -i .ciconfigtemp/dockerimages/xyz/abc/def.tar'}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'make test'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test-pmbp'}},
       ],
     }, deploy_master => {
       machine => {enabled => \1},
@@ -222,9 +234,10 @@ for (
     }},
     workflows => {version => 2, build => {jobs => [
       'build',
+      {'test-pmbp' => {requires => ['build']}},
       {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['test']}},
+                           requires => ['build', 'test-pmbp', 'test']}},
     ]}},
   }}}, 'build jobs / docker with tests'],
   [{circleci => {required_docker_images => ['a/b', 'a/b/c']}} => {'.circleci/config.yml' => {json => {
@@ -350,15 +363,6 @@ for (
           "paths" => ['.ciconfigtemp'],
         }},
       ],
-    }, test => {
-      machine => {enabled => \1},
-      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
-      steps => [
-        'checkout',
-        {"attach_workspace" => {"at" => "./"}},
-        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
-        {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
-      ],
     }, deploy_master => {
       machine => {enabled => \1},
       steps => [
@@ -375,14 +379,14 @@ for (
     }},
     workflows => {version => 2, build => {jobs => [
       'build',
-      {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['test']}},
+                           requires => ['build']}},
     ]}},
   }}}, 'empty build_generated_files'],
   [{circleci => {
     heroku => 1,
     build_generated_files => ['foo', 'bar'],
+    tests => ['test2'],
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
@@ -404,6 +408,7 @@ for (
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test2'}},
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
     }, deploy_master => {
@@ -424,13 +429,14 @@ for (
       'build',
       {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['test']}},
+                           requires => ['build', 'test']}},
     ]}},
   }}}],
   [{circleci => {
     heroku => 1,
     build_generated_files => ['foo', 'bar'],
     build_generated_pmbp => 1,
+    tests => ['test3'],
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
@@ -453,6 +459,7 @@ for (
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test3'}},
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
     }, deploy_master => {
@@ -473,7 +480,7 @@ for (
       'build',
       {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['test']}},
+                           requires => ['build', 'test']}},
     ]}},
   }}}],
   [{circleci => {deploy => ['true', 'false']}} => {'.circleci/config.yml' => {json => {
@@ -490,7 +497,39 @@ for (
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
-  }}}],
+  }}}, 'deploy commands'],
+  [{circleci => {
+    deploy => ['true', 'false'],
+    build_generated_files => [],
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => ['.ciconfigtemp'],
+        }},
+      ],
+    }, deploy_master => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => 'true'}},
+        {deploy => {command => 'false'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {deploy_master => {requires => ['build'],
+                         filters => {branches => {only => ['master']}}}},
+    ]}},
+  }}}, 'deploy commands jobs'],
   [{circleci => {deploy => {
     branch => q{oge"'\\x-},
     commands => ['true', 'false'],
@@ -526,6 +565,47 @@ for (
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
+  [{circleci => {
+    make_deploy_branches => ['master', 'staging'],
+    build_generated_pmbp => 1,
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => ['.ciconfigtemp',
+                      qw(deps local perl prove plackup lserver local-server rev)],
+        }},
+      ],
+    }, deploy_master => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => 'make deploy-master'}},
+      ],
+    }, deploy_staging => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => 'make deploy-staging'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {deploy_master => {requires => ['build'],
+                         filters => {branches => {only => ['master']}}}},
+      {deploy_staging => {requires => ['build'],
+                          filters => {branches => {only => ['staging']}}}},
+    ]}},
+  }}}, 'make_deploy jobs'],
   [{circleci => {merger => 1}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
@@ -622,7 +702,9 @@ for (
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
-  [{circleci => {parallel => 1}} => {'.circleci/config.yml' => {json => {
+  [{circleci => {
+    parallel => 1,
+  }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
       parallelism => 2,
@@ -653,6 +735,7 @@ for (
   [{circleci => {
     build_generated_files => [],
     parallel => 4,
+    tests => ['test1'],
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
@@ -675,6 +758,7 @@ for (
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test1'}},
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
     }},
@@ -781,7 +865,50 @@ for (
       ],
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
-  }}}],
+  }}}, 'deploy branch'],
+  [{circleci => {build => [
+    {command => ['a', 'b']},
+  ], deploy_branch => {
+    b1 => ['c'],
+    b2 => ['d'],
+  }, build_generated_files => []}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'a' . "\n" . 'b'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => ['.ciconfigtemp'],
+        }},
+      ],
+    }, deploy_b1 => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => 'c'}},
+      ],
+    }, deploy_b2 => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => 'd'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {deploy_b1 => {requires => ['build'],
+                     filters => {branches => {only => ['b1']}}}},
+      {deploy_b2 => {requires => ['build'],
+                     filters => {branches => {only => ['b2']}}}},
+    ]}},
+  }}}, 'deploy branch jobs'],
   [{circleci => {
     empty => 1,
   }} => {'.circleci/config.yml' => {json => {

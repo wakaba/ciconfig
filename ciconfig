@@ -2612,26 +2612,37 @@ my $Platforms = {
         # $stores
 
         my @job_name = qw(build);
-        $json->{jobs}->{build}->{steps} = ['checkout'];
         if ($split_jobs) {
-          push @job_name, 'test';
-          $json->{jobs}->{test}->{steps} = [@$loads];
+          push @job_name, map { 'test-' . $_ } sort { $a cmp $b } keys %{$json->{_test_jobs}};
+          push @job_name, 'test' if defined $json->{_test};
         }
         for my $job_name (@job_name) {
           $json->{jobs}->{$job_name}->{machine}->{enabled} = \1;
           $json->{jobs}->{$job_name}->{environment}->{CIRCLE_ARTIFACTS} = '/tmp/circle-artifacts/' . $job_name;
-          push @{$json->{jobs}->{$job_name}->{steps}},
-              circle_step ('mkdir -p $CIRCLE_ARTIFACTS');
+          $json->{jobs}->{$job_name}->{steps} = [
+            @$loads,
+            circle_step ('mkdir -p $CIRCLE_ARTIFACTS'),
+          ];
         }
+        $json->{jobs}->{build}->{steps} = [
+          'checkout',
+          circle_step ('mkdir -p $CIRCLE_ARTIFACTS'),
+        ];
         if (defined $json->{_build}) {
           push @{$json->{jobs}->{build}->{steps}}, map {
             circle_step ($_);
           } @{delete $json->{_build}};
         }
         if (defined $json->{_test}) {
-          push @{$json->{jobs}->{$job_name[-1]}->{steps}}, map {
+          push @{$json->{jobs}->{$split_jobs ? 'test' : 'build'}->{steps}}, map {
             circle_step ($_);
-          } @{delete $json->{_test}};
+          } @{$json->{_test}};
+        }
+        for (sort { $a cmp $b } keys %{$json->{_test_jobs}}) {
+          my $job_name = 'test-' . $_;
+          push @{$json->{jobs}->{$job_name}->{steps}}, map {
+            circle_step ($_);
+          } @{$json->{_test_jobs}->{$_}};
         }
         for my $job_name (@job_name) {
           push @{$json->{jobs}->{$job_name}->{steps}},
@@ -2640,21 +2651,28 @@ my $Platforms = {
               }};
         }
         push @{$json->{jobs}->{build}->{steps}}, @$stores;
-        for my $branch (sort { $a cmp $b } keys %{$json->{_deploy} or {}}) {
-          push @{$json->{jobs}->{$job_name[-1]}->{steps}}, map {
-            circle_step ($_, deploy => 1, branch => $branch);
-          } @{$json->{_deploy}->{$branch}};
+        if (keys %{$json->{_deploy} or {}}) {
+          for my $branch (sort { $a cmp $b } keys %{$json->{_deploy} or {}}) {
+            push @{$json->{jobs}->{$split_jobs ? 'test' : 'build'}->{steps}}, map {
+              circle_step ($_, deploy => 1, branch => $branch);
+            } @{$json->{_deploy}->{$branch}};
+          }
+          delete $json->{_deploy};
         }
-        delete $json->{_deploy};
-
+        
         $json->{workflows}->{build}->{jobs} = ['build'];
-        if ($split_jobs) {
+        for my $job_name (@job_name) {
+          next if $job_name eq 'build';
           push @{$json->{workflows}->{build}->{jobs}},
-              {'test' => {requires => ['build']}};
+              {$job_name => {requires => ['build']}};
+          if ($json->{_parallel}) {
+            $json->{jobs}->{$job_name}->{parallelism} = $json->{_parallel};
+          }
         }
-        if  ($json->{_parallel}) {
-          $json->{jobs}->{$job_name[-1]}->{parallelism} = delete $json->{_parallel};
+        if (not $split_jobs and $json->{_parallel}) {
+          $json->{jobs}->{build}->{parallelism} = $json->{_parallel};
         }
+        delete $json->{_parallel};
 
         ## Deploy steps executed after build job
         for my $branch_name (sort { $a cmp $b } keys %{$json->{_deploy_jobs} or {}}) {
@@ -2666,11 +2684,13 @@ my $Platforms = {
                 circle_step ($_, deploy => 1);
               } @{$json->{_deploy_jobs}->{$branch_name}};
           push @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
-            requires => [$job_name[-1]],
+            requires => \@job_name,
             filters => {branches => {only => [$branch_name]}},
           }};
         }
         delete $json->{_deploy_jobs};
+        delete $json->{_test_jobs};
+        delete $json->{_test};
 
         delete $json->{_build_generated_files};
         delete $json->{_build_generated_images};
@@ -2754,8 +2774,13 @@ $Options->{'circleci', 'heroku'} = {
 $Options->{'circleci', 'pmbp'} = {
   set => sub {
     return unless $_[1];
-    push @{$_[0]->{_build} ||= []}, 'make test-deps';
-    push @{$_[0]->{_test} ||= []}, 'make test';
+    my $json = $_[0];
+    push @{$json->{_build} ||= []}, 'make test-deps';
+    if (defined $json->{_build_generated_files}) {
+      push @{$json->{_test_jobs}->{pmbp} ||= []}, 'make test';
+    } else {
+      push @{$json->{_test} ||= []}, 'make test';
+    }
   },
 };
 
@@ -2835,14 +2860,23 @@ $Options->{'circleci', 'build'} = {
 
 $Options->{'circleci', 'tests'} = {
   set => sub {
-    push @{$_[0]->{_test} ||= []}, @{$_[1]};
+    if (ref $_[1] eq 'HASH') {
+      die "No |build_generated_files|"
+          unless defined $_[0]->{_build_generated_files};
+      for (sort { $a cmp $b } keys %{$_[1]}) {
+        push @{$_[0]->{_test_jobs}->{$_} ||= []}, @{$_[1]->{$_}};
+      }
+    } else {
+      push @{$_[0]->{_test} ||= []}, @{$_[1]};
+    }
   },
 };
 
 $Options->{'circleci', 'make_deploy_branches'} = {
   set => sub {
+    my $has_bg = !! $_[0]->{_build_generated_files};
     for my $branch (@{$_[1]}) {
-      push @{$_[0]->{_deploy}->{$branch} ||= []},
+      push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$branch} ||= []},
           "make deploy-$branch";
     }
   },
@@ -2854,7 +2888,8 @@ $Options->{'circleci', 'deploy'} = {
     if (ref $_[1] eq 'ARRAY') {
       $def = {branch => 'master', commands => $_[1]};
     }
-    push @{$_[0]->{_deploy}->{$def->{branch}} ||= []},
+    my $has_bg = !! $_[0]->{_build_generated_files};
+    push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$def->{branch}} ||= []},
         @{$def->{commands}};
   },
 };
@@ -2862,8 +2897,9 @@ $Options->{'circleci', 'deploy'} = {
 $Options->{'circleci', 'deploy_branch'} = {
   set => sub {
     my $def = $_[1];
+    my $has_bg = !! $_[0]->{_build_generated_files};
     for my $branch (sort { $a cmp $b } keys %$def) {
-      push @{$_[0]->{_deploy}->{$branch} ||= []}, @{$def->{$branch}};
+      push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$branch} ||= []}, @{$def->{$branch}};
     }
   },
 };
