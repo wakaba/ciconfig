@@ -2584,37 +2584,30 @@ my $Platforms = {
         if ($split_jobs) {
           push @$loads, {"attach_workspace" => {"at" => "./"}};
           if (@{$json->{_build_generated_images} or []}) {
-            push @$loads,
-                {"attach_workspace" => {"at" => "/tmp/dockerimages"}};
             for my $name (@{$json->{_build_generated_images} or []}) {
               push @$loads,
-                  {"run" => {"command" => "docker load -i /tmp/dockerimages/$name.tar"}};
+                  {"run" => {"command" => "docker load -i .ciconfigtemp/dockerimages/$name.tar"}};
             }
           }
         }
         # $loads
         my $stores = [];
         if ($split_jobs) {
-          push @$stores,
-              {"persist_to_workspace" => {
-                "root" => "./",
-                "paths" => $json->{_build_generated_files},
-              }};
           if (@{$json->{_build_generated_images} or []}) {
             for my $name (@{$json->{_build_generated_images} or []}) {
               my $dir = $name;
               $dir =~ s{[^/]+$}{};
               push @$stores,
-                  {run => {command => 'mkdir -p /tmp/dockerimages/'.$dir}};
+                  {run => {command => 'mkdir -p .ciconfigtemp/dockerimages/'.$dir}};
               push @$stores,
-                  {"run" => {"command" => "docker save -o /tmp/dockerimages/$name.tar $name"}};
+                  {"run" => {"command" => "docker save -o .ciconfigtemp/dockerimages/$name.tar $name"}};
             }
-            push @$stores,
-                {"persist_to_workspace" => {
-                  "root" => "/tmp",
-                  "paths" => ['dockerimages'],
-                }};
           }
+          push @$stores,
+              {"persist_to_workspace" => {
+                "root" => "./",
+                "paths" => ['.ciconfigtemp', @{$json->{_build_generated_files}}],
+              }};
         }
         # $stores
 

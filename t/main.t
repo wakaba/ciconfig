@@ -138,15 +138,11 @@ for (
         {run => {command => 'docker info'}},
         {run => {command => 'docker build -t xyz/abc/def .'}},
         {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {run => {command => 'mkdir -p .ciconfigtemp/dockerimages/xyz/abc/'}},
+        {run => {command => 'docker save -o .ciconfigtemp/dockerimages/xyz/abc/def.tar xyz/abc/def'}},
         {"persist_to_workspace" => {
           "root" => "./",
-          "paths" => [],
-        }},
-        {run => {command => 'mkdir -p /tmp/dockerimages/xyz/abc/'}},
-        {run => {command => 'docker save -o /tmp/dockerimages/xyz/abc/def.tar xyz/abc/def'}},
-        {"persist_to_workspace" => {
-          "root" => "/tmp",
-          "paths" => ['dockerimages'],
+          "paths" => ['.ciconfigtemp'],
         }},
       ],
     }, test => {
@@ -155,8 +151,7 @@ for (
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
-        {"attach_workspace" => {"at" => "/tmp/dockerimages"}},
-        {run => {command => 'docker load -i /tmp/dockerimages/xyz/abc/def.tar'}},
+        {run => {command => 'docker load -i .ciconfigtemp/dockerimages/xyz/abc/def.tar'}},
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
@@ -165,8 +160,7 @@ for (
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
-        {"attach_workspace" => {"at" => "/tmp/dockerimages"}},
-        {run => {command => 'docker load -i /tmp/dockerimages/xyz/abc/def.tar'}},
+        {run => {command => 'docker load -i .ciconfigtemp/dockerimages/xyz/abc/def.tar'}},
         {deploy => {command => 'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS xyz || docker login -u $DOCKER_USER -p $DOCKER_PASS xyz'}},
         {deploy => {command => 'docker push xyz/abc/def && curl -sSLf $BWALL_URL -X POST'}},
       ],
@@ -197,15 +191,11 @@ for (
         {run => {command => 'docker build -t xyz/abc/def .'}},
         {run => {command => 'make test-deps'}},
         {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {run => {command => 'mkdir -p .ciconfigtemp/dockerimages/xyz/abc/'}},
+        {run => {command => 'docker save -o .ciconfigtemp/dockerimages/xyz/abc/def.tar xyz/abc/def'}},
         {"persist_to_workspace" => {
           "root" => "./",
-          "paths" => [],
-        }},
-        {run => {command => 'mkdir -p /tmp/dockerimages/xyz/abc/'}},
-        {run => {command => 'docker save -o /tmp/dockerimages/xyz/abc/def.tar xyz/abc/def'}},
-        {"persist_to_workspace" => {
-          "root" => "/tmp",
-          "paths" => ['dockerimages'],
+          "paths" => ['.ciconfigtemp'],
         }},
       ],
     }, test => {
@@ -214,8 +204,7 @@ for (
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
-        {"attach_workspace" => {"at" => "/tmp/dockerimages"}},
-        {run => {command => 'docker load -i /tmp/dockerimages/xyz/abc/def.tar'}},
+        {run => {command => 'docker load -i .ciconfigtemp/dockerimages/xyz/abc/def.tar'}},
         {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
         {run => {command => 'make test'}},
         {run => {command => 'echo 1'}},
@@ -226,8 +215,7 @@ for (
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
-        {"attach_workspace" => {"at" => "/tmp/dockerimages"}},
-        {run => {command => 'docker load -i /tmp/dockerimages/xyz/abc/def.tar'}},
+        {run => {command => 'docker load -i .ciconfigtemp/dockerimages/xyz/abc/def.tar'}},
         {deploy => {command => 'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS xyz || docker login -u $DOCKER_USER -p $DOCKER_PASS xyz'}},
         {deploy => {command => 'docker push xyz/abc/def && curl -sSLf $BWALL_URL -X POST'}},
       ],
@@ -359,7 +347,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {"persist_to_workspace" => {
           "root" => "./",
-          "paths" => [],
+          "paths" => ['.ciconfigtemp'],
         }},
       ],
     }, test => {
@@ -406,7 +394,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {"persist_to_workspace" => {
           "root" => "./",
-          "paths" => ['foo', 'bar'],
+          "paths" => ['.ciconfigtemp', 'foo', 'bar'],
         }},
       ],
     }, test => {
@@ -454,7 +442,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {"persist_to_workspace" => {
           "root" => "./",
-          "paths" => ['foo', 'bar',
+          "paths" => ['.ciconfigtemp', 'foo', 'bar',
                       qw(deps local perl prove plackup lserver local-server rev)],
         }},
       ],
@@ -676,7 +664,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
         {"persist_to_workspace" => {
           "root" => "./",
-          "paths" => [],
+          "paths" => ['.ciconfigtemp'],
         }},
       ],
     }, test => {
