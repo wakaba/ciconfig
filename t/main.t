@@ -373,7 +373,7 @@ for (
       'git config --global user.name "CircleCI"'
         }},
         {deploy => {command => 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"'}},
-        {deploy => {command => 'make create-commit-for-heroku'}},
+        {deploy => {command => 'make create-commit-for-heroku-circleci'}},
         {deploy => {command => 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master'}},
       ],
     }},
@@ -421,7 +421,7 @@ for (
       'git config --global user.name "CircleCI"'
         }},
         {deploy => {command => 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"'}},
-        {deploy => {command => 'make create-commit-for-heroku'}},
+        {deploy => {command => 'make create-commit-for-heroku-circleci'}},
         {deploy => {command => 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master'}},
       ],
     }},
@@ -472,7 +472,7 @@ for (
       'git config --global user.name "CircleCI"'
         }},
         {deploy => {command => 'git checkout --orphan herokucommit && git commit -m "Heroku base commit"'}},
-        {deploy => {command => 'make create-commit-for-heroku'}},
+        {deploy => {command => 'make create-commit-for-heroku-circleci'}},
         {deploy => {command => 'git push git@heroku.com:$HEROKU_APP_NAME.git +`git rev-parse HEAD`:refs/heads/master'}},
       ],
     }},

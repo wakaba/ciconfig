@@ -2764,7 +2764,7 @@ $Options->{'circleci', 'heroku'} = {
     push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{'master'} ||= []},
         'git checkout --orphan herokucommit && git commit -m "Heroku base commit"',
         @{ref $def->{prepare} eq 'ARRAY' ? $def->{prepare} : []},
-        'make create-commit-for-heroku',
+        'make '.($has_bg ? 'create-commit-for-heroku-circleci' : 'create-commit-for-heroku'),
         'git push git@heroku.com:'.($def->{app_name} || '$HEROKU_APP_NAME').'.git +`git rev-parse HEAD`:refs/heads/master',
         @{ref $def->{pushed} eq 'ARRAY' ? $def->{pushed} : []},
     ;
