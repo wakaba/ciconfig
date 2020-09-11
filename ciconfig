@@ -2584,7 +2584,9 @@ my $Platforms = {
         if ($split_jobs) {
           push @$loads, {"attach_workspace" => {"at" => "./"}};
           if (@{$json->{_build_generated_images} or []}) {
-            for my $name (@{$json->{_build_generated_images} or []}) {
+            for (@{$json->{_build_generated_images} or []}) {
+              my $name = $_;
+              $name =~ s{:}{/}g;
               push @$loads,
                   {"run" => {"command" => "docker load -i .ciconfigtemp/dockerimages/$name.tar"}};
             }
@@ -2594,13 +2596,15 @@ my $Platforms = {
         my $stores = [];
         if ($split_jobs) {
           if (@{$json->{_build_generated_images} or []}) {
-            for my $name (@{$json->{_build_generated_images} or []}) {
+            for (@{$json->{_build_generated_images} or []}) {
+              my $name = $_;
+              $name =~ s{:}{/}g;
               my $dir = $name;
               $dir =~ s{[^/]+$}{};
               push @$stores,
                   {run => {command => 'mkdir -p .ciconfigtemp/dockerimages/'.$dir}};
               push @$stores,
-                  {"run" => {"command" => "docker save -o .ciconfigtemp/dockerimages/$name.tar $name"}};
+                  {"run" => {"command" => "docker save -o .ciconfigtemp/dockerimages/$name.tar $_"}};
             }
           }
           push @$stores,
@@ -2823,15 +2827,16 @@ $Options->{'circleci', 'docker-build'} = {
     my $has_login = {};
     for my $def (@$defs) {
       $def = ref $def ? $def : {name => $def};
-      die "No |name|" unless defined $def->{name};
+      my $name = defined $def->{name} ? $def->{name} : $def->{expression};
+      die "No |name|" unless defined $name;
       $def->{path} = '.' unless defined $def->{path};
       $def->{branch} = 'master' unless defined $def->{branch};
       if ($has_bg) {
-        push @{$_[0]->{_build_generated_images} ||= []}, $def->{name};
+        push @{$_[0]->{_build_generated_images} ||= []}, $name;
       }
       push @{$_[0]->{_build} ||= []},
-          'docker build -t ' . $def->{name} . ' ' . $def->{path};
-      if ($def->{name} =~ m{^([^/]+)/([^/]+)/([^/]+)$}) {
+          'docker build -t ' . $name . ' ' . $def->{path};
+      if ($name =~ m{^([^/]+)/([^/]+)/([^/]+)$}) {
         if (not $has_login->{$1}) {
           push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$def->{branch}} ||= []},
               'docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS '.$1.' || docker login -u $DOCKER_USER -p $DOCKER_PASS '.$1;
@@ -2846,7 +2851,7 @@ $Options->{'circleci', 'docker-build'} = {
       }
 
       push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$def->{branch}} ||= []},
-          'docker push ' . $def->{name} . ' && ' .
+          'docker push ' . $name . ' && ' .
           'curl -sSLf $BWALL_URL'.(defined $def->{bwall_suffix} ? '.' . $def->{bwall_suffix} : $def->{branch} eq 'master' ? '' : '.' . $def->{branch}).' -X POST';
     } # $def
   },
