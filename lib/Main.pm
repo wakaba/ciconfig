@@ -110,7 +110,8 @@ my $Platforms = {
         }
         # $stores
 
-        my @job_name = qw(build);
+        my @build_job_name = qw(build);
+        my @job_name = @build_job_name;
         if ($split_jobs) {
           push @job_name, map { 'test-' . $_ } sort { $a cmp $b } keys %{$json->{_test_jobs}};
           push @job_name, 'test' if defined $json->{_test};
@@ -187,6 +188,20 @@ my $Platforms = {
             filters => {branches => {only => [$branch_name]}},
           }};
         }
+        for my $branch_name (sort { $a cmp $b } keys %{$json->{_early_deploy_jobs} or {}}) {
+          my $job_name = 'early_deploy_' . $branch_name;
+          $json->{jobs}->{$job_name}->{machine}->{enabled} = \1;
+          push @{$json->{jobs}->{$job_name}->{steps}}, @$loads;
+          push @{$json->{jobs}->{$job_name}->{steps}},
+              map {
+                circle_step ($_, deploy => 1);
+              } @{$json->{_early_deploy_jobs}->{$branch_name}};
+          push @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
+            requires => \@build_job_name,
+            filters => {branches => {only => [$branch_name]}},
+          }};
+        }
+        delete $json->{_early_deploy_jobs};
         delete $json->{_deploy_jobs};
         delete $json->{_test_jobs};
         delete $json->{_test};
@@ -375,8 +390,17 @@ $Options->{'circleci', 'tests'} = {
 $Options->{'circleci', 'make_deploy_branches'} = {
   set => sub {
     my $has_bg = !! $_[0]->{_build_generated_files};
-    for my $branch (@{$_[1]}) {
-      push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$branch} ||= []},
+    for (@{$_[1]}) {
+      my $branch;
+      my $testless;
+      if (ref $_) {
+        $branch = $_->{name};
+        $testless = $_->{testless};
+      } else {
+        $branch = $_;
+      }
+      die "No |build_generated_files|" if $testless and not $has_bg;
+      push @{$_[0]->{$testless ? '_early_deploy_jobs' : $has_bg ? '_deploy_jobs' : '_deploy'}->{$branch} ||= []},
           "make deploy-$branch";
     }
   },

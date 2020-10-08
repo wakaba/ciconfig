@@ -533,6 +533,176 @@ for (
                            requires => ['build', 'test']}},
     ]}},
   }}}],
+  [{circleci => {
+    build_generated_files => ['foo', 'bar'],
+    tests => {
+      t1 => ['test3'],
+      t2 => ['test4'],
+    },
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => ['.ciconfigtemp', 'foo', 'bar'],
+        }},
+      ],
+    }, 'test-t1' => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t1'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test3'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test-t1'}},
+      ],
+    }, 'test-t2' => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t2'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test4'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test-t2'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {'test-t1' => {requires => ['build']}},
+      {'test-t2' => {requires => ['build']}},
+    ]}},
+  }}}, 'Multiple test steps'],
+  [{circleci => {
+    build_generated_files => ['foo', 'bar'],
+    tests => {
+      t1 => ['test3'],
+      t2 => ['test4'],
+    },
+    make_deploy_branches => ['master'],
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => ['.ciconfigtemp', 'foo', 'bar'],
+        }},
+      ],
+    }, 'test-t1' => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t1'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test3'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test-t1'}},
+      ],
+    }, 'test-t2' => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t2'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test4'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test-t2'}},
+      ],
+    }, deploy_master => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => 'make deploy-master'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {'test-t1' => {requires => ['build']}},
+      {'test-t2' => {requires => ['build']}},
+      {deploy_master => {requires => ['build', 'test-t1', 'test-t2'],
+                         filters => {branches => {only => ['master']}}}},
+    ]}},
+  }}}, 'Multiple test steps with deploy'],
+  [{circleci => {
+    build_generated_files => ['foo', 'bar'],
+    tests => {
+      t1 => ['test3'],
+      t2 => ['test4'],
+    },
+    make_deploy_branches => ['master', {name => 'devel', testless => 1}],
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => ['.ciconfigtemp', 'foo', 'bar'],
+        }},
+      ],
+    }, 'test-t1' => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t1'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test3'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test-t1'}},
+      ],
+    }, 'test-t2' => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t2'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test4'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test-t2'}},
+      ],
+    }, deploy_master => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => 'make deploy-master'}},
+      ],
+    }, early_deploy_devel => {
+      machine => {enabled => \1},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => 'make deploy-devel'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {'test-t1' => {requires => ['build']}},
+      {'test-t2' => {requires => ['build']}},
+      {deploy_master => {requires => ['build', 'test-t1', 'test-t2'],
+                         filters => {branches => {only => ['master']}}}},
+      {early_deploy_devel => {requires => ['build'],
+                              filters => {branches => {only => ['devel']}}}},
+    ]}},
+  }}}, 'Multiple test steps with test-less deploy'],
   [{circleci => {deploy => ['true', 'false']}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
