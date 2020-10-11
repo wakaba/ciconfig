@@ -17,6 +17,7 @@ sub circle_step ($;%) {
         $in->{command} = join "\n", @{$in->{command}};
       }
     } else {
+      keys %$in; # reset
       my $command = each %$in;
       $in = {%{$in->{$command}}, command => $command};
     }
@@ -142,8 +143,9 @@ my $Platforms = {
           my $job_name = 'test-' . $_;
           push @{$json->{jobs}->{$job_name}->{steps}}, map {
             circle_step ($_);
-          } @{$json->{_test_jobs}->{$_}};
+          } @{$json->{_test_preps} or []}, @{$json->{_test_jobs}->{$_}};
         }
+        delete $json->{_test_preps};
         for my $job_name (@job_name) {
           push @{$json->{jobs}->{$job_name}->{steps}},
               {store_artifacts => {
@@ -316,7 +318,7 @@ $Options->{'circleci', 'build_generated_pmbp'} = {
 $Options->{'circleci', 'required_docker_images'} = {
   set => sub {
     return unless ref $_[1] eq 'ARRAY' and @{$_[1] or []};
-    unshift @{$_[0]->{_build} ||= []},
+    my $preps = [
         'docker info',
         {
           (join ' && ', map {
@@ -324,7 +326,10 @@ $Options->{'circleci', 'required_docker_images'} = {
           } @{$_[1]}) => {
             background => 1,
           },
-        };
+        },
+    ];
+    unshift @{$_[0]->{_build} ||= []}, @$preps;
+    unshift @{$_[0]->{_test_preps} ||= []}, @$preps;
   }, # set
 }; # required_docker_images
 
