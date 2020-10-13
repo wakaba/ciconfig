@@ -198,7 +198,7 @@ my $Platforms = {
               map {
                 circle_step ($_, deploy => 1);
               } @{$json->{_early_deploy_jobs}->{$branch_name}};
-          push @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
+          unshift @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
             requires => \@build_job_name,
             filters => {branches => {only => [$branch_name]}},
           }};
