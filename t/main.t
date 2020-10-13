@@ -748,13 +748,13 @@ for (
       ],
     }},
     workflows => {version => 2, build => {jobs => [
+      {early_deploy_devel => {requires => ['build'],
+                              filters => {branches => {only => ['devel']}}}},
       'build',
       {'test-t1' => {requires => ['build']}},
       {'test-t2' => {requires => ['build']}},
       {deploy_master => {requires => ['build', 'test-t1', 'test-t2'],
                          filters => {branches => {only => ['master']}}}},
-      {early_deploy_devel => {requires => ['build'],
-                              filters => {branches => {only => ['devel']}}}},
     ]}},
   }}}, 'Multiple test steps with test-less deploy'],
   [{circleci => {deploy => ['true', 'false']}} => {'.circleci/config.yml' => {json => {
