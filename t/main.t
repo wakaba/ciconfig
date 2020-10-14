@@ -225,6 +225,46 @@ for (
     ]}},
   }}}, 'build jobs / docker, expression'],
   [{circleci => {
+    'docker-build' => {expression => 'xyz/$ABC/def:$CIRCLE_SHA1',
+                       no_push => 1},
+    build_generated_files => [],
+    tests => ['test1'],
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'docker info'}},
+        {run => {command => 'docker build -t xyz/$ABC/def:$CIRCLE_SHA1 .'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {run => {command => 'mkdir -p .ciconfigtemp/dockerimages/xyz/$ABC/def/'}},
+        {run => {command => 'docker save -o .ciconfigtemp/dockerimages/xyz/$ABC/def/$CIRCLE_SHA1.tar xyz/$ABC/def:$CIRCLE_SHA1'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => ['.ciconfigtemp'],
+        }},
+      ],
+    }, test => {
+      machine => {enabled => \1},
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'docker load -i .ciconfigtemp/dockerimages/xyz/$ABC/def/$CIRCLE_SHA1.tar'}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test1'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      'build',
+      {test => {requires => ['build']}},
+    ]}},
+  }}}, 'build jobs / docker, expression, no push'],
+  [{circleci => {
     'docker-build' => 'xyz/abc/def',
     build_generated_files => [],
     pmbp => 1,
