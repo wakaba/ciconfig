@@ -351,6 +351,8 @@ $Options->{'circleci', 'docker-build'} = {
       }
       push @{$_[0]->{_build} ||= []},
           'docker build -t ' . $name . ' ' . $def->{path};
+
+      next if $def->{no_push};
       if ($name =~ m{^([^/]+)/([^/]+)/([^/]+)$}) {
         if (not $has_login->{$1}) {
           push @{$_[0]->{$has_bg ? '_deploy_jobs' : '_deploy'}->{$def->{branch}} ||= []},
