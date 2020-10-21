@@ -8,6 +8,16 @@ sub shellquote ($) {
   return "'$s'";
 } # shellquote
 
+sub install_awscli_command () {
+  return join "\n",
+        "(((sudo apt-cache search python-dev | grep ^python-dev) || ".
+           "sudo apt-get update) && ".
+         "sudo apt-get install -y python-dev) || ".
+        "(sudo apt-get update && sudo apt-get install -y python-dev)",
+        "sudo pip install awscli --upgrade || sudo pip3 install awscli --upgrade",
+        "aws --version";
+} # install_awscli_command
+
 sub new_job () {
   return {
     machine => {"image" => "ubuntu-2004:202008-01"},
@@ -22,6 +32,8 @@ sub circle_step ($;%) {
       if (ref $in->{command} eq 'ARRAY') {
         $in->{command} = join "\n", @{$in->{command}};
       }
+    } elsif (defined delete $in->{awscli}) {
+      $in->{command} = install_awscli_command ();
     } else {
       keys %$in; # reset
       my $command = each %$in;
@@ -460,13 +472,7 @@ $Options->{'circleci', 'merger'} = {
 $Options->{'circleci', 'awscli'} = {
   set => sub {
     return unless $_[1];
-    push @{$_[0]->{_build} ||= []}, join "\n",
-        "(((sudo apt-cache search python-dev | grep ^python-dev) || ".
-           "sudo apt-get update) && ".
-         "sudo apt-get install -y python-dev) || ".
-        "(sudo apt-get update && sudo apt-get install -y python-dev)",
-        "sudo pip install awscli --upgrade || sudo pip3 install awscli --upgrade",
-        "aws --version";
+    push @{$_[0]->{_build} ||= []}, install_awscli_command ();
   },
 };
 
