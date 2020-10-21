@@ -1004,6 +1004,24 @@ for (
     }},
     workflows => {version => 2, build => {jobs => ['build']}},
   }}}],
+  [{circleci => {deploy_branch => {
+    x => [{awscli => 1}],
+  }}} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => $machine,
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {deploy => {command => "if [ \"\${CIRCLE_BRANCH}\" == 'x' ]; then\ntrue\n(((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev) || (sudo apt-get update && sudo apt-get install -y python-dev)\n".
+                 "sudo pip install awscli --upgrade || sudo pip3 install awscli --upgrade\n".
+                 "aws --version\nfi"}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => ['build']}},
+  }}}],
   [{circleci => {parallel => \1}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
