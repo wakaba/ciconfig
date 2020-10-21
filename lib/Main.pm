@@ -465,7 +465,7 @@ $Options->{'circleci', 'awscli'} = {
            "sudo apt-get update) && ".
          "sudo apt-get install -y python-dev) || ".
         "(sudo apt-get update && sudo apt-get install -y python-dev)",
-        "sudo pip install awscli --upgrade",
+        "sudo pip install awscli --upgrade || sudo pip3 install awscli --upgrade",
         "aws --version";
   },
 };
