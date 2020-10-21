@@ -7,6 +7,8 @@ use Test::More;
 use Main;
 use JSON::PS;
 
+my $machine = {"image" => "ubuntu-2004:202008-01"};
+
 for (
   [{} => {}],
 
@@ -80,7 +82,7 @@ for (
   [{circleci => {}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -93,7 +95,7 @@ for (
   [{circleci => {'docker-build' => 'abc/def'}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -110,7 +112,7 @@ for (
   [{circleci => {'docker-build' => 'xyz/abc/def'}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -131,7 +133,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -147,7 +149,7 @@ for (
         }},
       ],
     }, test => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
       steps => [
         'checkout',
@@ -158,7 +160,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -181,7 +183,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -197,7 +199,7 @@ for (
         }},
       ],
     }, test => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
       steps => [
         'checkout',
@@ -208,7 +210,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -232,7 +234,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -248,7 +250,7 @@ for (
         }},
       ],
     }, test => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
       steps => [
         'checkout',
@@ -273,7 +275,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -291,7 +293,7 @@ for (
         }},
       ],
     }, test => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
       steps => [
         'checkout',
@@ -302,7 +304,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
     }, 'test-pmbp' => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-pmbp'},
       steps => [
         'checkout',
@@ -313,7 +315,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test-pmbp'}},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -333,7 +335,7 @@ for (
   [{circleci => {required_docker_images => ['a/b', 'a/b/c']}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -353,7 +355,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -368,7 +370,7 @@ for (
         }},
       ],
     }, 'test-t1' => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t1'},
       steps => [
         'checkout',
@@ -381,7 +383,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test-t1'}},
       ],
     }, 'test-t2' => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t2'},
       steps => [
         'checkout',
@@ -403,7 +405,7 @@ for (
   [{circleci => {heroku => 1}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -425,7 +427,7 @@ for (
   }}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -447,7 +449,7 @@ for (
   ]}}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -471,7 +473,7 @@ for (
   ]}}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -496,7 +498,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -508,7 +510,7 @@ for (
         }},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -534,7 +536,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -546,7 +548,7 @@ for (
         }},
       ],
     }, test => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
       steps => [
         'checkout',
@@ -556,7 +558,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -584,7 +586,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -597,7 +599,7 @@ for (
         }},
       ],
     }, test => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
       steps => [
         'checkout',
@@ -607,7 +609,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test'}},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -636,7 +638,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -648,7 +650,7 @@ for (
         }},
       ],
     }, 'test-t1' => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t1'},
       steps => [
         'checkout',
@@ -658,7 +660,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test-t1'}},
       ],
     }, 'test-t2' => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t2'},
       steps => [
         'checkout',
@@ -684,7 +686,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -696,7 +698,7 @@ for (
         }},
       ],
     }, 'test-t1' => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t1'},
       steps => [
         'checkout',
@@ -706,7 +708,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test-t1'}},
       ],
     }, 'test-t2' => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t2'},
       steps => [
         'checkout',
@@ -716,7 +718,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test-t2'}},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -741,7 +743,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -753,7 +755,7 @@ for (
         }},
       ],
     }, 'test-t1' => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t1'},
       steps => [
         'checkout',
@@ -763,7 +765,7 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test-t1'}},
       ],
     }, 'test-t2' => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t2'},
       steps => [
         'checkout',
@@ -773,14 +775,14 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/test-t2'}},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
         {deploy => {command => 'make deploy-master'}},
       ],
     }, early_deploy_devel => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -800,7 +802,7 @@ for (
   [{circleci => {deploy => ['true', 'false']}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -818,7 +820,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -830,7 +832,7 @@ for (
         }},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -850,7 +852,7 @@ for (
   }}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -867,7 +869,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -885,7 +887,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -898,14 +900,14 @@ for (
         }},
       ],
     }, deploy_master => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
         {deploy => {command => 'make deploy-master'}},
       ],
     }, deploy_staging => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -923,7 +925,7 @@ for (
   [{circleci => {merger => 1}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -931,14 +933,14 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }, deploy_staging => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {deploy => {command => 'git rev-parse HEAD > head.txt' . "\x0A" .
           'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"master\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into master\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"'}},
       ],
     }, deploy_nightly => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {deploy => {command => 'git rev-parse HEAD > head.txt' . "\x0A" .
@@ -956,7 +958,7 @@ for (
   [{circleci => {merger => {into => 'dev'}}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -964,14 +966,14 @@ for (
         {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
       ],
     }, deploy_staging => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {deploy => {command => 'git rev-parse HEAD > head.txt' . "\x0A" .
           'curl -f -s -S --request POST --header "Authorization:token $GITHUB_ACCESS_TOKEN" --header "Content-Type:application/json" --data-binary "{\\"base\\":\\"dev\\",\\"head\\":\\"`cat head.txt`\\",\\"commit_message\\":\\"auto-merge $CIRCLE_BRANCH into dev\\"}" "https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges"'}},
       ],
     }, deploy_nightly => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {deploy => {command => 'git rev-parse HEAD > head.txt' . "\x0A" .
@@ -989,7 +991,7 @@ for (
   [{circleci => {awscli => 1}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1006,7 +1008,7 @@ for (
     version => 2,
     jobs => {build => {
       parallelism => 2,
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1022,7 +1024,7 @@ for (
     version => 2,
     jobs => {build => {
       parallelism => 2,
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1036,7 +1038,7 @@ for (
     version => 2,
     jobs => {build => {
       parallelism => 4,
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1053,7 +1055,7 @@ for (
   }} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1066,7 +1068,7 @@ for (
       ],
     }, test => {
       parallelism => 4,
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test'},
       steps => [
         'checkout',
@@ -1084,7 +1086,7 @@ for (
   [{circleci => {parallel => 0}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1097,7 +1099,7 @@ for (
   [{circleci => {parallel => \0}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1113,7 +1115,7 @@ for (
   ]}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1131,7 +1133,7 @@ for (
   ]}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1148,7 +1150,7 @@ for (
   ]}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1167,7 +1169,7 @@ for (
   }}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1188,7 +1190,7 @@ for (
   }, build_generated_files => []}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
-      machine => {enabled => \1},
+      machine => $machine,
       environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
       steps => [
         'checkout',
@@ -1201,14 +1203,14 @@ for (
         }},
       ],
     }, deploy_b1 => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
         {deploy => {command => 'c'}},
       ],
     }, deploy_b2 => {
-      machine => {enabled => \1},
+      machine => $machine,
       steps => [
         'checkout',
         {"attach_workspace" => {"at" => "./"}},
@@ -1237,7 +1239,7 @@ for (
     version => 2,
     jobs => {
       gaa4 => {
-        machine => {enabled => \1},
+        machine => $machine,
         steps => [
           "checkout",
           {run => {command => 'git config --global user.email "temp@circleci.test";git config --global user.name "CircleCI"'}},
@@ -1270,7 +1272,7 @@ for (
     version => 2,
     jobs => {
       gaa4 => {
-        machine => {enabled => \1},
+        machine => $machine,
         steps => [
           "checkout",
           {run => {command => 'git config --global user.email "temp@circleci.test";git config --global user.name "CircleCI"'}},
@@ -1281,7 +1283,7 @@ for (
         ],
       },
       build => {
-        machine => {enabled => \1},
+        machine => $machine,
         environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
         steps => [
           'checkout',

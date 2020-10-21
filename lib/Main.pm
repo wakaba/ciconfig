@@ -8,6 +8,12 @@ sub shellquote ($) {
   return "'$s'";
 } # shellquote
 
+sub new_job () {
+  return {
+    machine => {"image" => "ubuntu-2004:202008-01"},
+  };
+} # new_job
+
 sub circle_step ($;%) {
   my ($in, %args) = @_;
 
@@ -118,7 +124,7 @@ my $Platforms = {
           push @job_name, 'test' if defined $json->{_test};
         }
         for my $job_name (@job_name) {
-          $json->{jobs}->{$job_name}->{machine}->{enabled} = \1;
+          $json->{jobs}->{$job_name} = new_job;
           $json->{jobs}->{$job_name}->{environment}->{CIRCLE_ARTIFACTS} = '/tmp/circle-artifacts/' . $job_name;
           $json->{jobs}->{$job_name}->{steps} = [
             @$loads,
@@ -179,7 +185,7 @@ my $Platforms = {
         ## Deploy steps executed after build job
         for my $branch_name (sort { $a cmp $b } keys %{$json->{_deploy_jobs} or {}}) {
           my $job_name = 'deploy_' . $branch_name;
-          $json->{jobs}->{$job_name}->{machine}->{enabled} = \1;
+          $json->{jobs}->{$job_name} = new_job;
           push @{$json->{jobs}->{$job_name}->{steps}}, @$loads;
           push @{$json->{jobs}->{$job_name}->{steps}},
               map {
@@ -192,7 +198,7 @@ my $Platforms = {
         }
         for my $branch_name (sort { $a cmp $b } keys %{$json->{_early_deploy_jobs} or {}}) {
           my $job_name = 'early_deploy_' . $branch_name;
-          $json->{jobs}->{$job_name}->{machine}->{enabled} = \1;
+          $json->{jobs}->{$job_name} = new_job;
           push @{$json->{jobs}->{$job_name}->{steps}}, @$loads;
           push @{$json->{jobs}->{$job_name}->{steps}},
               map {
@@ -486,11 +492,8 @@ $Options->{'circleci', 'empty'} = {
 $Options->{'circleci', 'gaa'} = {
   set => sub {
     my $json = $_[0];
-    $json->{jobs}->{gaa4} = {
-      "machine" => {
-        "enabled" => \1,
-      },
-      "steps" => [
+    $json->{jobs}->{gaa4} = new_job;
+    $json->{jobs}->{gaa4}->{steps} = [
         "checkout",
         circle_step (join ";",
           'git config --global user.email "temp@circleci.test"',
@@ -500,8 +503,7 @@ $Options->{'circleci', 'gaa'} = {
         circle_step ("make updatenightly"),
         circle_step ("git commit -m auto", deploy => 1),
         circle_step ("git push origin +`git rev-parse HEAD`:refs/heads/nightly", deploy => 1),
-      ],
-    };
+    ];
     my $hour = int ($json->{_random_day_time} / 60);
     my $minute = ($json->{_random_day_time}) % 60;
     $json->{workflows}->{gaa4} = {
