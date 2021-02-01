@@ -75,7 +75,20 @@ my $Platforms = {
   travisci => {
     file => '.travis.yml',
     set => sub {
-      #unshift @{$_[0]->{jobs}->{include} ||= []}, {stage => 'test'};
+      my $json = $_[0];
+      #unshift @{$json->{jobs}->{include} ||= []}, {stage => 'test'};
+
+      if (delete $json->{_empty}) {
+        for (qw(before_install install script)) {
+          die "Both |empty| and non-empty rules are specified"
+              if defined $json->{$_};
+        }
+
+        $json->{git}->{submodules} = \0;
+        $json->{before_install} = 'true';
+        $json->{install} = 'true';
+        $json->{script} = 'true';
+      }
     },
   },
   circleci => {
@@ -239,6 +252,13 @@ my $Platforms = {
 };
 
 my $Options = {};
+
+$Options->{'travisci', 'empty'} = {
+  set => sub {
+    return unless $_[1];
+    $_[0]->{_empty} = 1;
+  },
+};
 
 $Options->{'travisci', 'pmbp'} = {
   set => sub {

@@ -78,6 +78,12 @@ for (
        script => 'curl -f https://gist.githubusercontent.com/wakaba/ab553f86cd017e0cb28c6dbb5364b009/raw/travis-merge-job.pl | perl'},
     ]},
   }}}],
+  [{travisci => {empty => 1}} => {'.travis.yml' => {json => {
+    git => {submodules => \0},
+    before_install => 'true',
+    install => 'true',
+    script => 'true',
+  }}}],
 
   [{circleci => {}} => {'.circleci/config.yml' => {json => {
     version => 2,
