@@ -179,7 +179,8 @@ for (
       'build',
       {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build', 'test']}},
+                           requires => ['build', 'test'],
+                           context => ['deploy-context']}},
     ]}},
   }}}, 'build jobs / docker'],
   [{circleci => {
@@ -229,7 +230,8 @@ for (
       'build',
       {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build', 'test']}},
+                           requires => ['build', 'test'],
+                           context => ['deploy-context']}},
     ]}},
   }}}, 'build jobs / docker, expression'],
   [{circleci => {
@@ -335,7 +337,8 @@ for (
       {'test-pmbp' => {requires => ['build']}},
       {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build', 'test-pmbp', 'test']}},
+                           requires => ['build', 'test-pmbp', 'test'],
+                           context => ['deploy-context']}},
     ]}},
   }}}, 'build jobs / docker with tests'],
   [{circleci => {required_docker_images => ['a/b', 'a/b/c']}} => {'.circleci/config.yml' => {json => {
@@ -532,7 +535,8 @@ for (
     workflows => {version => 2, build => {jobs => [
       'build',
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build']}},
+                           requires => ['build'],
+                           context => ['deploy-context']}},
     ]}},
   }}}, 'empty build_generated_files'],
   [{circleci => {
@@ -581,7 +585,8 @@ for (
       'build',
       {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build', 'test']}},
+                           requires => ['build', 'test'],
+                           context => ['deploy-context']}},
     ]}},
   }}}],
   [{circleci => {
@@ -632,7 +637,8 @@ for (
       'build',
       {test => {requires => ['build']}},
       {'deploy_master' => {filters => {branches => {only => ['master']}},
-                           requires => ['build', 'test']}},
+                           requires => ['build', 'test'],
+                           context => ['deploy-context']}},
     ]}},
   }}}],
   [{circleci => {
@@ -736,7 +742,8 @@ for (
       {'test-t1' => {requires => ['build']}},
       {'test-t2' => {requires => ['build']}},
       {deploy_master => {requires => ['build', 'test-t1', 'test-t2'],
-                         filters => {branches => {only => ['master']}}}},
+                         filters => {branches => {only => ['master']}},
+                         context => ['deploy-context']}},
     ]}},
   }}}, 'Multiple test steps with deploy'],
   [{circleci => {
@@ -797,12 +804,14 @@ for (
     }},
     workflows => {version => 2, build => {jobs => [
       {early_deploy_devel => {requires => ['build'],
-                              filters => {branches => {only => ['devel']}}}},
+                              filters => {branches => {only => ['devel']}},
+                              context => ['deploy-context']}},
       'build',
       {'test-t1' => {requires => ['build']}},
       {'test-t2' => {requires => ['build']}},
       {deploy_master => {requires => ['build', 'test-t1', 'test-t2'],
-                         filters => {branches => {only => ['master']}}}},
+                         filters => {branches => {only => ['master']}},
+                         context => ['deploy-context']}},
     ]}},
   }}}, 'Multiple test steps with test-less deploy'],
   [{circleci => {deploy => ['true', 'false']}} => {'.circleci/config.yml' => {json => {
@@ -849,7 +858,8 @@ for (
     workflows => {version => 2, build => {jobs => [
       'build',
       {deploy_master => {requires => ['build'],
-                         filters => {branches => {only => ['master']}}}},
+                         filters => {branches => {only => ['master']}},
+                         context => ['deploy-context']}},
     ]}},
   }}}, 'deploy commands jobs'],
   [{circleci => {deploy => {
@@ -923,9 +933,11 @@ for (
     workflows => {version => 2, build => {jobs => [
       'build',
       {deploy_master => {requires => ['build'],
-                         filters => {branches => {only => ['master']}}}},
+                         filters => {branches => {only => ['master']}},
+                         context => ['deploy-context']}},
       {deploy_staging => {requires => ['build'],
-                          filters => {branches => {only => ['staging']}}}},
+                          filters => {branches => {only => ['staging']}},
+                          context => ['deploy-context']}},
     ]}},
   }}}, 'make_deploy jobs'],
   [{circleci => {merger => 1}} => {'.circleci/config.yml' => {json => {
@@ -956,9 +968,11 @@ for (
     workflows => {version => 2, build => {jobs => [
       'build',
       {'deploy_nightly' => {filters => {branches => {only => ['nightly']}},
-                            requires => ['build']}},
+                            requires => ['build'],
+                            context => ['deploy-context']}},
       {'deploy_staging' => {filters => {branches => {only => ['staging']}},
-                            requires => ['build']}},
+                            requires => ['build'],
+                            context => ['deploy-context']}},
     ]}},
   }}}],
   [{circleci => {merger => {into => 'dev'}}} => {'.circleci/config.yml' => {json => {
@@ -989,9 +1003,11 @@ for (
     workflows => {version => 2, build => {jobs => [
       'build',
       {'deploy_nightly' => {filters => {branches => {only => ['nightly']}},
-                            requires => ['build']}},
+                            requires => ['build'],
+                            context => ['deploy-context']}},
       {'deploy_staging' => {filters => {branches => {only => ['staging']}},
-                            requires => ['build']}},
+                            requires => ['build'],
+                            context => ['deploy-context']}},
     ]}},
   }}}],
   [{circleci => {awscli => 1}} => {'.circleci/config.yml' => {json => {
@@ -1244,9 +1260,11 @@ for (
     workflows => {version => 2, build => {jobs => [
       'build',
       {deploy_b1 => {requires => ['build'],
-                     filters => {branches => {only => ['b1']}}}},
+                     filters => {branches => {only => ['b1']}},
+                     context => ['deploy-context']}},
       {deploy_b2 => {requires => ['build'],
-                     filters => {branches => {only => ['b2']}}}},
+                     filters => {branches => {only => ['b2']}},
+                     context => ['deploy-context']}},
     ]}},
   }}}, 'deploy branch jobs'],
   [{circleci => {
