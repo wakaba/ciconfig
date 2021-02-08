@@ -219,6 +219,7 @@ my $Platforms = {
           push @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
             requires => \@job_name,
             filters => {branches => {only => [$branch_name]}},
+            context => ['deploy-context'],
           }};
         }
         for my $branch_name (sort { $a cmp $b } keys %{$json->{_early_deploy_jobs} or {}}) {
@@ -232,6 +233,7 @@ my $Platforms = {
           unshift @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
             requires => \@build_job_name,
             filters => {branches => {only => [$branch_name]}},
+            context => ['deploy-context'],
           }};
         }
         delete $json->{_early_deploy_jobs};
