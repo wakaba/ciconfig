@@ -543,7 +543,7 @@ $Options->{'circleci', 'gaa'} = {
             "filters" => {
               "branches" => {
                 "only" => [
-                  "staging"
+                  "master"
                 ]
               }
             }
