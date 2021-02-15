@@ -1301,7 +1301,7 @@ for (
             "filters" => {
               "branches" => {
                 "only" => [
-                  "staging"
+                  "master"
                 ]
               }
             }
@@ -1343,7 +1343,7 @@ for (
             "filters" => {
               "branches" => {
                 "only" => [
-                  "staging"
+                  "master"
                 ]
               }
             }
