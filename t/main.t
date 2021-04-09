@@ -7,7 +7,7 @@ use Test::More;
 use Main;
 use JSON::PS;
 
-my $machine = {"image" => "ubuntu-2004:202008-01"};
+my $machine = {"image" => "ubuntu-2004:202101-01"};
 
 for (
   [{} => {}],
