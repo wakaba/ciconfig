@@ -441,14 +441,17 @@ $Options->{'circleci', 'make_deploy_branches'} = {
     for (@{$_[1]}) {
       my $branch;
       my $testless;
+      my $awscli;
       if (ref $_) {
         $branch = $_->{name};
         $testless = $_->{testless};
+        $awscli = $_->{awscli};
       } else {
         $branch = $_;
       }
       die "No |build_generated_files|" if $testless and not $has_bg;
       push @{$_[0]->{$testless ? '_early_deploy_jobs' : $has_bg ? '_deploy_jobs' : '_deploy'}->{$branch} ||= []},
+          ($awscli ? {awscli => 1} : ()),
           "make deploy-$branch";
     }
   },

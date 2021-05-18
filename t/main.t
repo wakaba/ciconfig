@@ -814,6 +814,82 @@ for (
                          context => ['deploy-context']}},
     ]}},
   }}}, 'Multiple test steps with test-less deploy'],
+  [{circleci => {
+    build_generated_files => ['foo', 'bar'],
+    tests => {
+      t1 => ['test3'],
+      t2 => ['test4'],
+    },
+    make_deploy_branches => [{name => 'master', awscli => 1},
+                             {name => 'devel', testless => 1,
+                              awscli => 1}],
+  }} => {'.circleci/config.yml' => {json => {
+    version => 2,
+    jobs => {build => {
+      machine => $machine,
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/build'},
+      steps => [
+        'checkout',
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/build'}},
+        {"persist_to_workspace" => {
+          "root" => "./",
+          "paths" => ['.ciconfigtemp', 'foo', 'bar'],
+        }},
+      ],
+    }, 'test-t1' => {
+      machine => $machine,
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t1'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test3'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test-t1'}},
+      ],
+    }, 'test-t2' => {
+      machine => $machine,
+      environment => {CIRCLE_ARTIFACTS => '/tmp/circle-artifacts/test-t2'},
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {run => {command => 'mkdir -p $CIRCLE_ARTIFACTS'}},
+        {run => {command => 'test4'}},
+        {store_artifacts => {path => '/tmp/circle-artifacts/test-t2'}},
+      ],
+    }, deploy_master => {
+      machine => $machine,
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => "(((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev) || (sudo apt-get update && sudo apt-get install -y python-dev)\n".
+                 "sudo pip install awscli --upgrade || sudo pip3 install awscli --upgrade\n".
+                 "aws --version"}},
+        {deploy => {command => 'make deploy-master'}},
+      ],
+    }, early_deploy_devel => {
+      machine => $machine,
+      steps => [
+        'checkout',
+        {"attach_workspace" => {"at" => "./"}},
+        {deploy => {command => "(((sudo apt-cache search python-dev | grep ^python-dev) || sudo apt-get update) && sudo apt-get install -y python-dev) || (sudo apt-get update && sudo apt-get install -y python-dev)\n".
+                 "sudo pip install awscli --upgrade || sudo pip3 install awscli --upgrade\n".
+                 "aws --version"}},
+        {deploy => {command => 'make deploy-devel'}},
+      ],
+    }},
+    workflows => {version => 2, build => {jobs => [
+      {early_deploy_devel => {requires => ['build'],
+                              filters => {branches => {only => ['devel']}},
+                              context => ['deploy-context']}},
+      'build',
+      {'test-t1' => {requires => ['build']}},
+      {'test-t2' => {requires => ['build']}},
+      {deploy_master => {requires => ['build', 'test-t1', 'test-t2'],
+                         filters => {branches => {only => ['master']}},
+                         context => ['deploy-context']}},
+    ]}},
+  }}}, 'Multiple test steps with test-less deploy and awscli'],
   [{circleci => {deploy => ['true', 'false']}} => {'.circleci/config.yml' => {json => {
     version => 2,
     jobs => {build => {
