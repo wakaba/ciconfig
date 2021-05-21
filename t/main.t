@@ -801,14 +801,18 @@ for (
         {"attach_workspace" => {"at" => "./"}},
         {deploy => {command => 'make deploy-devel'}},
       ],
+    }, before_tests => {
+      machine => $machine,
+      steps => [],
     }},
     workflows => {version => 2, build => {jobs => [
+      'build',
       {early_deploy_devel => {requires => ['build'],
                               filters => {branches => {only => ['devel']}},
                               context => ['deploy-context']}},
-      'build',
-      {'test-t1' => {requires => ['build']}},
-      {'test-t2' => {requires => ['build']}},
+      {before_tests => {requires => ['build']}},
+      {'test-t1' => {requires => ['build', 'before_tests']}},
+      {'test-t2' => {requires => ['build', 'before_tests']}},
       {deploy_master => {requires => ['build', 'test-t1', 'test-t2'],
                          filters => {branches => {only => ['master']}},
                          context => ['deploy-context']}},
@@ -877,14 +881,18 @@ for (
                  "aws --version"}},
         {deploy => {command => 'make deploy-devel'}},
       ],
+    }, before_tests => {
+      machine => $machine,
+      steps => [],
     }},
     workflows => {version => 2, build => {jobs => [
+      'build',
       {early_deploy_devel => {requires => ['build'],
                               filters => {branches => {only => ['devel']}},
                               context => ['deploy-context']}},
-      'build',
-      {'test-t1' => {requires => ['build']}},
-      {'test-t2' => {requires => ['build']}},
+      {before_tests => {requires => ['build']}},
+      {'test-t1' => {requires => ['build', 'before_tests']}},
+      {'test-t2' => {requires => ['build', 'before_tests']}},
       {deploy_master => {requires => ['build', 'test-t1', 'test-t2'],
                          filters => {branches => {only => ['master']}},
                          context => ['deploy-context']}},
@@ -1450,7 +1458,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2018-2020 Wakaba <wakaba@suikawiki.org>.
+Copyright 2018-2021 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
