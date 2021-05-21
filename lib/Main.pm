@@ -22,6 +22,7 @@ sub new_job () {
   return {
     ## <https://github.com/circleci/circleci-docs/blob/master/jekyll/_cci2/configuration-reference.md#available-machine-images>
     machine => {"image" => "ubuntu-2004:202101-01"},
+    steps => [],
   };
 } # new_job
 
@@ -214,13 +215,22 @@ my $Platforms = {
             context => ['deploy-context'],
           }};
         }
+        my $test_requires = ['build'];
+        if (keys %{$json->{_early_deploy_jobs} or {}}) {
+          my $job_name = 'before_tests';
+          $json->{jobs}->{$job_name} = new_job;
+          push @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
+            requires => \@build_job_name,
+          }};
+          push @$test_requires, $job_name;
+        }
         delete $json->{_early_deploy_jobs};
 
         ## Test jobs
         for my $job_name (@job_name) {
           next if $job_name eq 'build';
           push @{$json->{workflows}->{build}->{jobs}},
-              {$job_name => {requires => ['build']}};
+              {$job_name => {requires => $test_requires}};
           if ($json->{_parallel}) {
             $json->{jobs}->{$job_name}->{parallelism} = $json->{_parallel};
           }
