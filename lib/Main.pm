@@ -193,8 +193,30 @@ my $Platforms = {
           }
           delete $json->{_deploy};
         }
-        
+        delete $json->{_test_jobs};
+        delete $json->{_test};
+
+        ## Build jobs
         $json->{workflows}->{build}->{jobs} = ['build'];
+        
+        ## Deploy job executed after builds
+        for my $branch_name (sort { $a cmp $b } keys %{$json->{_early_deploy_jobs} or {}}) {
+          my $job_name = 'early_deploy_' . $branch_name;
+          $json->{jobs}->{$job_name} = new_job;
+          push @{$json->{jobs}->{$job_name}->{steps}}, @$loads;
+          push @{$json->{jobs}->{$job_name}->{steps}},
+              map {
+                circle_step ($_, deploy => 1);
+              } @{$json->{_early_deploy_jobs}->{$branch_name}};
+          push @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
+            requires => \@build_job_name,
+            filters => {branches => {only => [$branch_name]}},
+            context => ['deploy-context'],
+          }};
+        }
+        delete $json->{_early_deploy_jobs};
+
+        ## Test jobs
         for my $job_name (@job_name) {
           next if $job_name eq 'build';
           push @{$json->{workflows}->{build}->{jobs}},
@@ -208,7 +230,7 @@ my $Platforms = {
         }
         delete $json->{_parallel};
 
-        ## Deploy steps executed after build job
+        ## Deploy job executed after tests
         for my $branch_name (sort { $a cmp $b } keys %{$json->{_deploy_jobs} or {}}) {
           my $job_name = 'deploy_' . $branch_name;
           $json->{jobs}->{$job_name} = new_job;
@@ -223,24 +245,7 @@ my $Platforms = {
             context => ['deploy-context'],
           }};
         }
-        for my $branch_name (sort { $a cmp $b } keys %{$json->{_early_deploy_jobs} or {}}) {
-          my $job_name = 'early_deploy_' . $branch_name;
-          $json->{jobs}->{$job_name} = new_job;
-          push @{$json->{jobs}->{$job_name}->{steps}}, @$loads;
-          push @{$json->{jobs}->{$job_name}->{steps}},
-              map {
-                circle_step ($_, deploy => 1);
-              } @{$json->{_early_deploy_jobs}->{$branch_name}};
-          unshift @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
-            requires => \@build_job_name,
-            filters => {branches => {only => [$branch_name]}},
-            context => ['deploy-context'],
-          }};
-        }
-        delete $json->{_early_deploy_jobs};
         delete $json->{_deploy_jobs};
-        delete $json->{_test_jobs};
-        delete $json->{_test};
 
         delete $json->{_build_generated_files};
         delete $json->{_build_generated_images};
@@ -594,7 +599,7 @@ sub generate ($$$;%) {
 
 =head1 LICENSE
 
-Copyright 2018-2020 Wakaba <wakaba@suikawiki.org>.
+Copyright 2018-2021 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
