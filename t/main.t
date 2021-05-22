@@ -803,7 +803,7 @@ for (
       ],
     }, before_tests => {
       machine => $machine,
-      steps => [],
+      steps => [{run => {command => 'true'}}],
     }},
     workflows => {version => 2, build => {jobs => [
       'build',
@@ -883,7 +883,7 @@ for (
       ],
     }, before_tests => {
       machine => $machine,
-      steps => [],
+      steps => [{run => {command => 'true'}}],
     }},
     workflows => {version => 2, build => {jobs => [
       'build',

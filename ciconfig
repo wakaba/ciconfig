@@ -2724,6 +2724,7 @@ my $Platforms = {
         if (keys %{$json->{_early_deploy_jobs} or {}}) {
           my $job_name = 'before_tests';
           $json->{jobs}->{$job_name} = new_job;
+          push @{$json->{jobs}->{$job_name}->{steps}}, circle_step ('true');
           push @{$json->{workflows}->{build}->{jobs}}, {$job_name => {
             requires => \@build_job_name,
           }};
